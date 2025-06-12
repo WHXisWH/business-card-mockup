@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的数字名片</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+</head>
+<body>
+
+    <div class="card-container">
+        <model-viewer 
+            src="building-model.glb"
+            ar 
+            auto-rotate 
+            camera-controls 
+            shadow-intensity="1"
+            alt="一个3D建筑模型">
+        </model-viewer>
+
+        <div class="info">
+            <h1>张三 (Zhang San)</h1>
+            <p>首席建筑设计师</p>
+            <p>联系方式: example@email.com</p>
+        </div>
+    </div>
+
+</body>
+</html>
