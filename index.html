@@ -1,25 +1,543 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D模型展示</title>
-    <link rel="stylesheet" href="style.css">
+    <title>建築業界向けNFC連携型DXプラットフォーム</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #FF6347 50%, #C0C0C0 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #87CEEB, #4682B4);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(45deg, #4682B4, #87CEEB);
+            transform: translateY(-2px);
+        }
+
+        .btn-red {
+            background: linear-gradient(45deg, #FF6347, #FF4500);
+        }
+
+        .btn-red:hover {
+            background: linear-gradient(45deg, #FF4500, #FF6347);
+        }
+
+        .btn-grey {
+            background: linear-gradient(45deg, #C0C0C0, #A9A9A9);
+        }
+
+        .btn-grey:hover {
+            background: linear-gradient(45deg, #A9A9A9, #C0C0C0);
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .back-btn:hover {
+            background: rgba(0,0,0,0.9);
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .plan-btn {
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border: 2px solid #87CEEB;
+            border-radius: 15px;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .plan-btn:hover {
+            background: #87CEEB;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        .viewer-container {
+            position: relative;
+            height: 70vh;
+            margin: 20px auto;
+            max-width: 800px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #87CEEB 0%, #FF6347 100%);
+        }
+
+        .model-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .model-info h3 {
+            margin-bottom: 10px;
+            color: #87CEEB;
+        }
+
+        .nft-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #FF6347, #FF4500);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 5px 15px rgba(255,99,71,0.4);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .nft-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(255,99,71,0.6);
+        }
+
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .document-item {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .document-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .document-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            color: #87CEEB;
+        }
+
+        .nft-marketplace {
+            text-align: center;
+            color: white;
+        }
+
+        .nft-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 30px auto;
+            color: #333;
+        }
+
+        .nft-price {
+            font-size: 24px;
+            color: #FF6347;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .purchase-btn {
+            background: linear-gradient(45deg, #32CD32, #228B22);
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 15px;
+        }
+
+        .purchase-btn:hover {
+            background: linear-gradient(45deg, #228B22, #32CD32);
+        }
+
+        @media (min-width: 768px) {
+            .card {
+                max-width: 500px;
+            }
+            
+            .category-grid, .plan-grid {
+                grid-template-columns: repeat(2, 1fr);
+                max-width: 800px;
+            }
+            
+            .document-grid {
+                grid-template-columns: repeat(4, 1fr);
+                max-width: 800px;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div id="topScreen" class="screen active">
+        <div class="header">
+            <h1>案件1 - DXプラットフォーム</h1>
+            <p>触れる、見える、繋がる。建築コミュニケーションの新しいカタチ</p>
+        </div>
+        
+        <div class="card">
+            <h2>📄 ドキュメントライブラリ</h2>
+            <p>各種提案資料、プロモーション資料、技術仕様書などを格納するエリアです。</p>
+            <button class="btn" onclick="showScreen('documentScreen')">資料を見る</button>
+        </div>
+        
+        <div class="card">
+            <h2>🏗️ BIM/3Dモデルギャラリー</h2>
+            <p>プロジェクトの建築モデルを、インタラクティブな3Dで体験できるエリアです。</p>
+            <button class="btn btn-red" onclick="showScreen('categoryScreen')">3Dモデルを見る</button>
+        </div>
+    </div>
 
-    <div class="nft-text">このNFTを取得しよう</div>
-    
-    <model-viewer 
-        src="building-model.glb"
-        ar 
-        auto-rotate 
-        camera-controls 
-        shadow-intensity="1"
-        environment-image="neutral"
-        alt="一个3D建筑模型">
-    </model-viewer>
+    <div id="documentScreen" class="screen">
+        <button class="back-btn" onclick="showScreen('topScreen')">←</button>
+        <div class="header">
+            <h1>ドキュメントライブラリ</h1>
+            <p>プロジェクト関連資料</p>
+        </div>
+        
+        <div class="document-grid">
+            <div class="document-item">
+                <div class="document-icon">📋</div>
+                <h3>提案書</h3>
+                <p>基本提案</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">📊</div>
+                <h3>技術仕様書</h3>
+                <p>詳細仕様</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">💰</div>
+                <h3>見積書</h3>
+                <p>概算見積</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">📈</div>
+                <h3>実績資料</h3>
+                <p>施工実績</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">🏆</div>
+                <h3>受賞歴</h3>
+                <p>表彰・認定</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">📜</div>
+                <h3>認証書</h3>
+                <p>ISO認証等</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">🌱</div>
+                <h3>環境対応</h3>
+                <p>環境配慮</p>
+            </div>
+            <div class="document-item">
+                <div class="document-icon">🔧</div>
+                <h3>メンテナンス</h3>
+                <p>保守計画</p>
+            </div>
+        </div>
+    </div>
 
+    <div id="categoryScreen" class="screen">
+        <button class="back-btn" onclick="showScreen('topScreen')">←</button>
+        <div class="header">
+            <h1>BIM/3Dモデルギャラリー</h1>
+            <p>ソリューション別モデル</p>
+        </div>
+        
+        <div class="category-grid">
+            <div class="card">
+                <h2>🚛 物流施設ソリューション</h2>
+                <p>次世代の物流ニーズに応える、高機能な物流倉庫のモデルプランを提案します。</p>
+                <button class="btn" onclick="showScreen('logisticsScreen')">プランを見る</button>
+            </div>
+            
+            <div class="card">
+                <h2>💾 データセンターソリューション</h2>
+                <p>デジタル社会の根幹を支える、高信頼性・高効率なデータセンターのモデルプランを提案します。</p>
+                <button class="btn btn-grey" onclick="showScreen('datacenterScreen')">プランを見る</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logisticsScreen" class="screen">
+        <button class="back-btn" onclick="showScreen('categoryScreen')">←</button>
+        <div class="header">
+            <h1>物流施設ソリューション</h1>
+            <p>モデルプラン一覧</p>
+        </div>
+        
+        <div class="plan-grid">
+            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan A', '延床面積: 5,000㎡ | 構造: 鉄骨造 | 特徴: 自動化対応')">
+                Plan A - 小規模自動化倉庫
+            </div>
+            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan B', '延床面積: 12,000㎡ | 構造: 鉄骨造 | 特徴: 多温度帯対応')">
+                Plan B - 中規模配送センター
+            </div>
+            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan C', '延床面積: 25,000㎡ | 構造: 鉄骨造 | 特徴: 最新IoT技術')">
+                Plan C - 大規模物流ハブ
+            </div>
+        </div>
+    </div>
+
+    <div id="datacenterScreen" class="screen">
+        <button class="back-btn" onclick="showScreen('categoryScreen')">←</button>
+        <div class="header">
+            <h1>データセンターソリューション</h1>
+            <p>モデルプラン一覧</p>
+        </div>
+        
+        <div class="plan-grid">
+            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan A', '延床面積: 3,000㎡ | 構造: RC造 | 特徴: エッジコンピューティング対応')">
+                Plan A - エッジデータセンター
+            </div>
+            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan B', '延床面積: 8,000㎡ | 構造: RC造 | 特徴: 高冗長性設計')">
+                Plan B - 企業向けデータセンター
+            </div>
+            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan C', '延床面積: 20,000㎡ | 構造: RC造 | 特徴: ハイパースケール対応')">
+                Plan C - クラウドデータセンター
+            </div>
+        </div>
+    </div>
+
+    <div id="viewerScreen" class="screen">
+        <button class="back-btn" onclick="goBackFromViewer()">←</button>
+        <button class="nft-btn" onclick="showScreen('nftScreen')">このNFTを受け取る 🎁</button>
+        
+        <div class="viewer-container">
+            <model-viewer 
+                id="modelViewer"
+                src="building-model.glb"
+                ar 
+                auto-rotate 
+                camera-controls 
+                shadow-intensity="1"
+                environment-image="neutral"
+                alt="3D建築モデル">
+            </model-viewer>
+            
+            <div class="model-info">
+                <h3 id="modelTitle">3Dモデル</h3>
+                <p id="modelDescription">モデルの詳細情報</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="nftScreen" class="screen">
+        <button class="back-btn" onclick="showScreen('viewerScreen')">←</button>
+        <div class="nft-marketplace">
+            <div class="header">
+                <h1>🎁 NFTデジタルギフト</h1>
+                <p>デジタル建築アセットを無料で受け取り</p>
+            </div>
+            
+            <div class="nft-card">
+                <h2 id="nftTitle">建築3Dモデル NFT</h2>
+                <p>この3Dモデルの利用権および所有権をNFTとして無料で受け取れます。</p>
+                
+                <div class="nft-price">🎁 無料贈呈</div>
+                
+                <div style="margin: 20px 0;">
+                    <h3>受け取れる権利:</h3>
+                    <ul style="text-align: left; margin: 10px 0;">
+                        <li>3Dモデルの商用利用権</li>
+                        <li>設計図面のダウンロード権</li>
+                        <li>技術仕様書へのアクセス権</li>
+                        <li>将来のアップデート版の優先入手権</li>
+                    </ul>
+                </div>
+                
+                <button class="btn purchase-btn" onclick="receiveNFT()">
+                    🎁 今すぐ受け取る
+                </button>
+                
+                <div style="margin-top: 20px; font-size: 14px; color: #666;">
+                    <p>※ 受け取りにはMetaMaskなどのWeb3ウォレットが必要です</p>
+                    <p>※ ガス代のみお客様負担となります</p>
+                </div>
+            </div>
+            
+            <div class="nft-card">
+                <h3>🔗 ブロックチェーン詳細</h3>
+                <p><strong>ネットワーク:</strong> Ethereum Mainnet</p>
+                <p><strong>コントラクト:</strong> 0x1234...abcd</p>
+                <p><strong>トークン規格:</strong> ERC-721</p>
+                <p><strong>発行者:</strong> 戸田建設株式会社</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentCategory = '';
+        
+        function showScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function showViewer(title, description) {
+            currentCategory = document.querySelector('.screen.active').id;
+            document.getElementById('modelTitle').textContent = title;
+            document.getElementById('modelDescription').textContent = description;
+            document.getElementById('nftTitle').textContent = title + ' NFT';
+            showScreen('viewerScreen');
+        }
+        
+        function goBackFromViewer() {
+            if (currentCategory === 'logisticsScreen') {
+                showScreen('logisticsScreen');
+            } else if (currentCategory === 'datacenterScreen') {
+                showScreen('datacenterScreen');
+            } else {
+                showScreen('categoryScreen');
+            }
+        }
+        
+        function receiveNFT() {
+            alert('🎁 NFTギフト受け取り機能はモックです。\n\n実際のシステムでは、Web3ウォレットとの連携により、ブロックチェーン上でのNFT転送処理が行われます。\n\n受け取り後は、お客様のウォレットに建築3DモデルのNFTが無料で転送され、関連する利用権や所有権が付与されます。\n\n戸田建設からのデジタルギフトをお楽しみください！');
+        }
+        
+        // NFC機能のシミュレーション
+        if ('serviceWorker' in navigator) {
+            console.log('NFC連携型DXプラットフォームが起動しました');
+        }
+    </script>
 </body>
 </html>
