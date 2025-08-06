@@ -23,6 +23,12 @@
             display: none;
             min-height: 100vh;
             padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .screen.active {
@@ -180,6 +186,19 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
+        .pdf-container {
+            position: relative;
+            height: 80vh;
+            margin-top: 20px;
+        }
+
+        .pdf-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 15px;
+        }
+
         model-viewer {
             width: 100%;
             height: 100%;
@@ -229,7 +248,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 20px;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
 
@@ -298,7 +317,6 @@
             
             .document-grid {
                 grid-template-columns: repeat(4, 1fr);
-                max-width: 800px;
             }
         }
     </style>
@@ -312,7 +330,7 @@
         
         <div class="card">
             <h2>📄 ドキュメントライブラリ</h2>
-            <p>各種提案資料、プロモーション資料、技術仕様書などを格納するエリアです。</p>
+            <p>各種提案資料、プロモーション資料などを格納するエリアです。</p>
             <button class="btn" onclick="showScreen('documentScreen')">資料を見る</button>
         </div>
         
@@ -331,48 +349,51 @@
         </div>
         
         <div class="document-grid">
-            <div class="document-item">
+            <div class="document-item" onclick="showPdfScreen('companyScreen', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                <div class="document-icon">🏢</div>
+                <h3>会社概要</h3>
+                <p>企業情報</p>
+            </div>
+            <div class="document-item" onclick="showPdfScreen('envScreen', 'https://pdfobject.com/pdf/sample.pdf')">
+                <div class="document-icon">🌱</div>
+                <h3>環境認証</h3>
+                <p>ISO認証等</p>
+            </div>
+            <div class="document-item" onclick="showPdfScreen('recordScreen', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                <div class="document-icon">📈</div>
+                <h3>施工実績</h3>
+                <p>プロジェクト例</p>
+            </div>
+            <div class="document-item" onclick="showPdfScreen('proposalScreen', 'https://pdfobject.com/pdf/sample.pdf')">
                 <div class="document-icon">📋</div>
                 <h3>提案書</h3>
                 <p>基本提案</p>
             </div>
-            <div class="document-item">
-                <div class="document-icon">📊</div>
-                <h3>技術仕様書</h3>
-                <p>詳細仕様</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">💰</div>
-                <h3>見積書</h3>
-                <p>概算見積</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">📈</div>
-                <h3>実績資料</h3>
-                <p>施工実績</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">🏆</div>
-                <h3>受賞歴</h3>
-                <p>表彰・認定</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">📜</div>
-                <h3>認証書</h3>
-                <p>ISO認証等</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">🌱</div>
-                <h3>環境対応</h3>
-                <p>環境配慮</p>
-            </div>
-            <div class="document-item">
-                <div class="document-icon">🔧</div>
-                <h3>メンテナンス</h3>
-                <p>保守計画</p>
-            </div>
         </div>
     </div>
+
+    <!-- PDF Viewer Screens -->
+    <div id="companyScreen" class="screen">
+        <button class="back-btn" onclick="hidePdfScreen('companyScreen', 'documentScreen')">←</button>
+        <div class="header"><h1>会社概要</h1></div>
+        <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
+    </div>
+    <div id="envScreen" class="screen">
+        <button class="back-btn" onclick="hidePdfScreen('envScreen', 'documentScreen')">←</button>
+        <div class="header"><h1>環境認証</h1></div>
+        <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
+    </div>
+    <div id="recordScreen" class="screen">
+        <button class="back-btn" onclick="hidePdfScreen('recordScreen', 'documentScreen')">←</button>
+        <div class="header"><h1>施工実績</h1></div>
+        <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
+    </div>
+    <div id="proposalScreen" class="screen">
+        <button class="back-btn" onclick="hidePdfScreen('proposalScreen', 'documentScreen')">←</button>
+        <div class="header"><h1>提案書</h1></div>
+        <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
+    </div>
+
 
     <div id="categoryScreen" class="screen">
         <button class="back-btn" onclick="showScreen('topScreen')">←</button>
@@ -505,11 +526,30 @@
 
     <script>
         let currentCategory = '';
+        let activeScreens = ['topScreen'];
         
         function showScreen(screenId) {
             const screens = document.querySelectorAll('.screen');
             screens.forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+        }
+
+        function showPdfScreen(screenId, pdfUrl) {
+            const screen = document.getElementById(screenId);
+            const iframe = screen.querySelector('iframe');
+            if (iframe) {
+                iframe.src = pdfUrl;
+            }
+            showScreen(screenId);
+        }
+
+        function hidePdfScreen(currentScreenId, targetScreenId) {
+            const screen = document.getElementById(currentScreenId);
+            const iframe = screen.querySelector('iframe');
+            if (iframe) {
+                iframe.src = ''; // Stop loading to save resources
+            }
+            showScreen(targetScreenId);
         }
         
         function showViewer(title, description) {
@@ -521,17 +561,21 @@
         }
         
         function goBackFromViewer() {
-            if (currentCategory === 'logisticsScreen') {
-                showScreen('logisticsScreen');
-            } else if (currentCategory === 'datacenterScreen') {
-                showScreen('datacenterScreen');
+            if (currentCategory) {
+                showScreen(currentCategory);
             } else {
                 showScreen('categoryScreen');
             }
         }
         
         function receiveNFT() {
-            alert('🎁 NFTギフト受け取り機能はモックです。\n\n実際のシステムでは、Web3ウォレットとの連携により、ブロックチェーン上でのNFT転送処理が行われます。\n\n受け取り後は、お客様のウォレットに建築3DモデルのNFTが無料で転送され、関連する利用権や所有権が付与されます。\n\n戸田建設からのデジタルギフトをお楽しみください！');
+            alert('🎁 NFTギフト受け取り機能はモックです。
+
+実際のシステムでは、Web3ウォレットとの連携により、ブロックチェーン上でのNFT転送処理が行われます。
+
+受け取り後は、お客様のウォレットに建築3DモデルのNFTが無料で転送され、関連する利用権や所有権が付与されます。
+
+戸田建設からのデジタルギフトをお楽しみください！');
         }
         
         // NFC機能のシミュレーション
