@@ -342,7 +342,7 @@
     </div>
 
     <div id="documentScreen" class="screen">
-        <button class="back-btn" onclick="showScreen('topScreen')">←</button>
+        <button class="back-btn" onclick="goBack()">←</button>
         <div class="header">
             <h1>ドキュメントライブラリ</h1>
             <p>プロジェクト関連資料</p>
@@ -374,29 +374,29 @@
 
     <!-- PDF Viewer Screens -->
     <div id="companyScreen" class="screen">
-        <button class="back-btn" onclick="hidePdfScreen('companyScreen', 'documentScreen')">←</button>
+        <button class="back-btn" onclick="hidePdfScreen('companyScreen')">←</button>
         <div class="header"><h1>会社概要</h1></div>
         <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
     </div>
     <div id="envScreen" class="screen">
-        <button class="back-btn" onclick="hidePdfScreen('envScreen', 'documentScreen')">←</button>
+        <button class="back-btn" onclick="hidePdfScreen('envScreen')">←</button>
         <div class="header"><h1>環境認証</h1></div>
         <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
     </div>
     <div id="recordScreen" class="screen">
-        <button class="back-btn" onclick="hidePdfScreen('recordScreen', 'documentScreen')">←</button>
+        <button class="back-btn" onclick="hidePdfScreen('recordScreen')">←</button>
         <div class="header"><h1>施工実績</h1></div>
         <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
     </div>
     <div id="proposalScreen" class="screen">
-        <button class="back-btn" onclick="hidePdfScreen('proposalScreen', 'documentScreen')">←</button>
+        <button class="back-btn" onclick="hidePdfScreen('proposalScreen')">←</button>
         <div class="header"><h1>提案書</h1></div>
         <div class="pdf-container"><iframe class="pdf-iframe" frameborder="0"></iframe></div>
     </div>
 
 
     <div id="categoryScreen" class="screen">
-        <button class="back-btn" onclick="showScreen('topScreen')">←</button>
+        <button class="back-btn" onclick="goBack()">←</button>
         <div class="header">
             <h1>BIM/3Dモデルギャラリー</h1>
             <p>ソリューション別モデル</p>
@@ -418,7 +418,7 @@
     </div>
 
     <div id="logisticsScreen" class="screen">
-        <button class="back-btn" onclick="showScreen('categoryScreen')">←</button>
+        <button class="back-btn" onclick="goBack()">←</button>
         <div class="header">
             <h1>物流施設ソリューション</h1>
             <p>モデルプラン一覧</p>
@@ -438,7 +438,7 @@
     </div>
 
     <div id="datacenterScreen" class="screen">
-        <button class="back-btn" onclick="showScreen('categoryScreen')">←</button>
+        <button class="back-btn" onclick="goBack()">←</button>
         <div class="header">
             <h1>データセンターソリューション</h1>
             <p>モデルプラン一覧</p>
@@ -481,7 +481,7 @@
     </div>
 
     <div id="nftScreen" class="screen">
-        <button class="back-btn" onclick="showScreen('viewerScreen')">←</button>
+        <button class="back-btn" onclick="goBack()">←</button>
         <div class="nft-marketplace">
             <div class="header">
                 <h1>🎁 NFTデジタルギフト</h1>
@@ -526,9 +526,17 @@
 
     <script>
         let currentCategory = '';
-        let activeScreens = ['topScreen'];
-        
+        let screenHistory = ['topScreen'];
+
         function showScreen(screenId) {
+            if (screenId === 'topScreen') {
+                screenHistory = ['topScreen'];
+            } else {
+                if (screenHistory[screenHistory.length - 1] !== screenId) {
+                    screenHistory.push(screenId);
+                }
+            }
+
             const screens = document.querySelectorAll('.screen');
             screens.forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -543,13 +551,13 @@
             showScreen(screenId);
         }
 
-        function hidePdfScreen(currentScreenId, targetScreenId) {
+        function hidePdfScreen(currentScreenId) {
             const screen = document.getElementById(currentScreenId);
             const iframe = screen.querySelector('iframe');
             if (iframe) {
                 iframe.src = ''; // Stop loading to save resources
             }
-            showScreen(targetScreenId);
+            goBack();
         }
         
         function showViewer(title, description) {
@@ -560,12 +568,20 @@
             showScreen('viewerScreen');
         }
         
-        function goBackFromViewer() {
-            if (currentCategory) {
-                showScreen(currentCategory);
+        function goBack() {
+            if (screenHistory.length > 1) {
+                screenHistory.pop();
+                const targetScreenId = screenHistory[screenHistory.length - 1];
+                const screens = document.querySelectorAll('.screen');
+                screens.forEach(screen => screen.classList.remove('active'));
+                document.getElementById(targetScreenId).classList.add('active');
             } else {
-                showScreen('categoryScreen');
+                showScreen('topScreen');
             }
+        }
+
+        function goBackFromViewer() {
+            goBack();
         }
         
         function receiveNFT() {
