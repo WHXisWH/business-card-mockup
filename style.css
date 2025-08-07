@@ -188,9 +188,13 @@
         }
 
         .pdf-container {
-            position: relative;
-            height: 80vh;
-            margin-top: 20px;
+            position: absolute;
+            top: 90px; /* 上部にスペースを確保 */
+            bottom: 20px; /* 下部にスペースを確保 */
+            left: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
         .pdf-iframe {
