@@ -188,20 +188,21 @@
         }
 
         .pdf-container {
-            position: absolute;
-            top: 90px; /* 上部にスペースを確保 */
-            bottom: 20px; /* 下部にスペースを確保 */
-            left: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
+            width: 100%;
+            height: calc(100vh - 220px); /* Adjust height based on header and controls */
+            overflow-y: auto;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
 
-        .pdf-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 15px;
+        #pdf-canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         model-viewer {
@@ -309,6 +310,32 @@
 
         .purchase-btn:hover {
             background: linear-gradient(45deg, #228B22, #32CD32);
+        }
+
+        .pdf-viewer-controls {
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            color: white;
+            font-weight: bold;
+        }
+
+        .pdf-viewer-controls .btn {
+            display: inline-block;
+            width: auto;
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 16px;
+        }
+
+        #page-num, #page-count {
+            display: inline-block;
+            margin: 0 5px;
         }
 
         @media (min-width: 768px) {
