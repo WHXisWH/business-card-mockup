@@ -67,6 +67,7 @@
             <button id="prev-page" class="btn">←</button>
             <span id="page-num"></span> / <span id="page-count"></span>
             <button id="next-page" class="btn">→</button>
+            <button id="fit-mode-toggle" class="btn" title="Toggle Fit Mode">⛶</button>
         </div>
         <div id="pdf-container" class="pdf-container">
             <canvas id="pdf-canvas"></canvas>
@@ -82,7 +83,7 @@
         
         <div class="category-grid">
             <div class="card">
-                <h2>🚛 物���施設ソリューション</h2>
+                <h2>🚛 物流施設ソリューション</h2>
                 <p>次世代の物流ニーズに応える、高機能な物流倉庫のモデルプランを提案します。</p>
                 <button class="btn" onclick="showScreen('logisticsScreen')">プランを見る</button>
             </div>
@@ -210,7 +211,7 @@
         let pageNum = 1;
         let pageRendering = false;
         let pageNumPending = null;
-        const scale = 1.5; // This can be adjusted
+        let fitMode = 'width'; // 'width' or 'page'
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -219,35 +220,43 @@
 
         function renderPage(num) {
             pageRendering = true;
-            // Using promise to fetch the page
             pdfDoc.getPage(num).then(function(page) {
+                const container = document.getElementById('pdf-container');
                 const viewport = page.getViewport({ scale: 1 });
-                const desiredWidth = document.getElementById('pdf-container').clientWidth;
-                const scale = desiredWidth / viewport.width;
-                const scaledViewport = page.getViewport({ scale: scale });
+                
+                let scale;
+                if (fitMode === 'width') {
+                    scale = container.clientWidth / viewport.width;
+                } else { // 'page'
+                    const scaleX = container.clientWidth / viewport.width;
+                    const scaleY = container.clientHeight / viewport.height;
+                    scale = Math.min(scaleX, scaleY);
+                }
+
+                const devicePixelRatio = window.devicePixelRatio || 1;
+                const scaledViewport = page.getViewport({ scale: scale * devicePixelRatio });
 
                 canvas.height = scaledViewport.height;
                 canvas.width = scaledViewport.width;
+                canvas.style.height = `${scaledViewport.height / devicePixelRatio}px`;
+                canvas.style.width = `${scaledViewport.width / devicePixelRatio}px`;
 
-                // Render PDF page into canvas context
                 const renderContext = {
                     canvasContext: ctx,
-                    viewport: scaledViewport
+                    viewport: scaledViewport,
+                    renderInteractiveForms: false,
                 };
                 const renderTask = page.render(renderContext);
 
-                // Wait for rendering to finish
                 renderTask.promise.then(function() {
                     pageRendering = false;
                     if (pageNumPending !== null) {
-                        // New page rendering is pending
                         renderPage(pageNumPending);
                         pageNumPending = null;
                     }
                 });
             });
 
-            // Update page counters
             document.getElementById('page-num').textContent = num;
         }
 
@@ -260,23 +269,27 @@
         }
 
         function onPrevPage() {
-            if (pageNum <= 1) {
-                return;
-            }
+            if (pageNum <= 1) return;
             pageNum--;
             queueRenderPage(pageNum);
         }
         document.getElementById('prev-page').addEventListener('click', onPrevPage);
 
         function onNextPage() {
-            if (pageNum >= pdfDoc.numPages) {
-                return;
-            }
+            if (pageNum >= pdfDoc.numPages) return;
             pageNum++;
             queueRenderPage(pageNum);
         }
         document.getElementById('next-page').addEventListener('click', onNextPage);
 
+        function toggleFitMode() {
+            fitMode = fitMode === 'width' ? 'page' : 'width';
+            console.log('Toggled fit mode to:', fitMode);
+            if (pdfDoc) {
+                queueRenderPage(pageNum);
+            }
+        }
+        document.getElementById('fit-mode-toggle').addEventListener('click', toggleFitMode);
 
         function showScreen(screenId) {
             console.log('Attempting to show screen:', screenId);
@@ -298,6 +311,8 @@
         function showPdfViewer(title, url) {
             console.log('Attempting to show PDF viewer for:', title, 'with URL:', url);
             document.getElementById('pdf-title').textContent = title;
+            
+            fitMode = 'width'; // Reset to default on new PDF
             
             pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
                 pdfDoc = pdfDoc_;
@@ -326,9 +341,10 @@
                 screenHistory.pop();
                 const targetScreenId = screenHistory[screenHistory.length - 1];
                 
-                // If we are going back from the PDF viewer, clear the canvas
                 if (currentScreenId === 'pdfViewerScreen' && pdfDoc) {
-                    pdfDoc.destroy();
+                    if (pdfDoc) {
+                       pdfDoc.destroy();
+                    }
                     pdfDoc = null;
                     const context = canvas.getContext('2d');
                     context.clearRect(0, 0, canvas.width, canvas.height);
