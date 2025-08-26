@@ -64,13 +64,18 @@
         <button class="back-btn" onclick="goBack()">←</button>
         <div class="header"><h1 id="pdf-title">PDF Viewer</h1></div>
         <div class="pdf-viewer-controls">
+            <button id="zoom-out" class="btn" title="缩小">−</button>
+            <button id="zoom-in" class="btn" title="放大">+</button>
+            <button id="rotate-pdf" class="btn" title="旋转90°">⟲</button>
             <button id="prev-page" class="btn">←</button>
             <span id="page-num"></span> / <span id="page-count"></span>
             <button id="next-page" class="btn">→</button>
-            <button id="fit-mode-toggle" class="btn" title="Toggle Fit Mode">⛶</button>
+            <button id="fit-mode-toggle" class="btn" title="适应模式">⛶</button>
         </div>
         <div id="pdf-container" class="pdf-container">
-            <canvas id="pdf-canvas"></canvas>
+            <div id="pdf-canvas-wrapper" class="pdf-canvas-wrapper">
+                <canvas id="pdf-canvas"></canvas>
+            </div>
         </div>
     </div>
 
@@ -212,8 +217,16 @@
         let pageRendering = false;
         let pageNumPending = null;
         let fitMode = 'width'; // 'width' or 'page'
+        let currentScale = 1;
+        let manualScale = 1;
+        let rotation = 0;
         const canvas = document.getElementById('pdf-canvas');
         const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('pdf-canvas-wrapper');
+        
+        // Pan navigation state
+        let isPanning = false;
+        let startX, startY, scrollStartX, scrollStartY;
 
         // Set worker source
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
@@ -222,24 +235,50 @@
             pageRendering = true;
             pdfDoc.getPage(num).then(function(page) {
                 const container = document.getElementById('pdf-container');
-                const viewport = page.getViewport({ scale: 1 });
+                const viewport = page.getViewport({ scale: 1, rotation });
                 
-                let scale;
+                // Calculate base scale based on fit mode
+                let baseScale;
                 if (fitMode === 'width') {
-                    scale = container.clientWidth / viewport.width;
+                    baseScale = (container.clientWidth - 40) / viewport.width; // 40px for padding
                 } else { // 'page'
-                    const scaleX = container.clientWidth / viewport.width;
-                    const scaleY = container.clientHeight / viewport.height;
-                    scale = Math.min(scaleX, scaleY);
+                    const scaleX = (container.clientWidth - 40) / viewport.width;
+                    const scaleY = (container.clientHeight - 40) / viewport.height;
+                    baseScale = Math.min(scaleX, scaleY);
                 }
 
+                // Apply manual zoom
+                const finalScale = baseScale * manualScale;
+                currentScale = finalScale;
+
+                // For mobile optimization, ensure minimum readable size
+                const minScale = Math.max(baseScale * 0.8, 0.5);
+                const maxScale = baseScale * 5;
+                const clampedScale = Math.max(minScale, Math.min(maxScale, finalScale));
+
                 const devicePixelRatio = window.devicePixelRatio || 1;
-                const scaledViewport = page.getViewport({ scale: scale * devicePixelRatio });
+                const scaledViewport = page.getViewport({ scale: clampedScale * devicePixelRatio, rotation });
 
                 canvas.height = scaledViewport.height;
                 canvas.width = scaledViewport.width;
                 canvas.style.height = `${scaledViewport.height / devicePixelRatio}px`;
                 canvas.style.width = `${scaledViewport.width / devicePixelRatio}px`;
+
+                // Center canvas if smaller than container
+                const canvasDisplayWidth = scaledViewport.width / devicePixelRatio;
+                const canvasDisplayHeight = scaledViewport.height / devicePixelRatio;
+                
+                if (canvasDisplayWidth < container.clientWidth) {
+                    canvas.style.marginLeft = `${(container.clientWidth - canvasDisplayWidth) / 2}px`;
+                } else {
+                    canvas.style.marginLeft = '0px';
+                }
+                
+                if (canvasDisplayHeight < container.clientHeight) {
+                    canvas.style.marginTop = `${(container.clientHeight - canvasDisplayHeight) / 2}px`;
+                } else {
+                    canvas.style.marginTop = '0px';
+                }
 
                 const renderContext = {
                     canvasContext: ctx,
@@ -284,12 +323,121 @@
 
         function toggleFitMode() {
             fitMode = fitMode === 'width' ? 'page' : 'width';
+            manualScale = 1; // Reset manual zoom when changing fit mode
             console.log('Toggled fit mode to:', fitMode);
             if (pdfDoc) {
                 queueRenderPage(pageNum);
             }
         }
         document.getElementById('fit-mode-toggle').addEventListener('click', toggleFitMode);
+
+        // Zoom functions
+        function zoomIn() {
+            manualScale = Math.min(manualScale * 1.2, 5);
+            if (pdfDoc) {
+                queueRenderPage(pageNum);
+            }
+        }
+        document.getElementById('zoom-in').addEventListener('click', zoomIn);
+
+        function zoomOut() {
+            manualScale = Math.max(manualScale / 1.2, 0.5);
+            if (pdfDoc) {
+                queueRenderPage(pageNum);
+            }
+        }
+        document.getElementById('zoom-out').addEventListener('click', zoomOut);
+
+        // Rotation function
+        function rotatePdf() {
+            rotation = (rotation + 90) % 360;
+            if (pdfDoc) {
+                queueRenderPage(pageNum);
+            }
+        }
+        document.getElementById('rotate-pdf').addEventListener('click', rotatePdf);
+
+        // Pan navigation for mobile
+        function setupPanNavigation() {
+            // Mouse events
+            canvasWrapper.addEventListener('mousedown', function(e) {
+                isPanning = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                scrollStartX = canvasWrapper.scrollLeft;
+                scrollStartY = canvasWrapper.scrollTop;
+                canvasWrapper.style.cursor = 'grabbing';
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isPanning) return;
+                const dx = startX - e.clientX;
+                const dy = startY - e.clientY;
+                canvasWrapper.scrollLeft = scrollStartX + dx;
+                canvasWrapper.scrollTop = scrollStartY + dy;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                isPanning = false;
+                canvasWrapper.style.cursor = 'grab';
+            });
+
+            // Touch events for mobile
+            canvasWrapper.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    isPanning = true;
+                    startX = e.touches[0].clientX;
+                    startY = e.touches[0].clientY;
+                    scrollStartX = canvasWrapper.scrollLeft;
+                    scrollStartY = canvasWrapper.scrollTop;
+                    e.preventDefault();
+                }
+            });
+
+            canvasWrapper.addEventListener('touchmove', function(e) {
+                if (isPanning && e.touches.length === 1) {
+                    const dx = startX - e.touches[0].clientX;
+                    const dy = startY - e.touches[0].clientY;
+                    canvasWrapper.scrollLeft = scrollStartX + dx;
+                    canvasWrapper.scrollTop = scrollStartY + dy;
+                    e.preventDefault();
+                }
+            });
+
+            canvasWrapper.addEventListener('touchend', function(e) {
+                isPanning = false;
+            });
+
+            // Pinch zoom for mobile
+            let initialDistance = 0;
+            let initialScale = 1;
+
+            canvasWrapper.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 2) {
+                    initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                    initialScale = manualScale;
+                    e.preventDefault();
+                }
+            });
+
+            canvasWrapper.addEventListener('touchmove', function(e) {
+                if (e.touches.length === 2) {
+                    const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                    const scaleChange = currentDistance / initialDistance;
+                    manualScale = Math.max(0.5, Math.min(5, initialScale * scaleChange));
+                    queueRenderPage(pageNum);
+                    e.preventDefault();
+                }
+            });
+        }
+
+        function getTouchDistance(touch1, touch2) {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
 
         function showScreen(screenId) {
             console.log('Attempting to show screen:', screenId);
@@ -312,13 +460,48 @@
             console.log('Attempting to show PDF viewer for:', title, 'with URL:', url);
             document.getElementById('pdf-title').textContent = title;
             
-            fitMode = 'width'; // Reset to default on new PDF
+            // Reset all PDF viewer state on new PDF
+            fitMode = 'width';
+            manualScale = 1;
+            rotation = 0;
+            currentScale = 1;
             
             pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
                 pdfDoc = pdfDoc_;
                 document.getElementById('page-count').textContent = pdfDoc.numPages;
                 pageNum = 1;
-                renderPage(pageNum);
+                
+                // Determine optimal initial settings based on PDF characteristics
+                pdfDoc.getPage(1).then(function(page) {
+                    const viewport = page.getViewport({ scale: 1 });
+                    const aspectRatio = viewport.width / viewport.height;
+                    const isMobile = window.innerWidth < 768;
+                    const isLandscapePdf = aspectRatio > 1.4;
+                    const isPortraitPdf = aspectRatio < 0.8;
+                    
+                    // Smart initial settings for mobile
+                    if (isMobile) {
+                        if (isLandscapePdf) {
+                            // For landscape PDFs like A3, start with page fit mode for overview
+                            fitMode = 'page';
+                            console.log('Landscape PDF detected - using page fit mode for overview');
+                        } else if (isPortraitPdf) {
+                            // For portrait PDFs like A4, width fit is usually better
+                            fitMode = 'width';
+                            console.log('Portrait PDF detected - using width fit mode');
+                        }
+                        
+                        // Adjust initial manual scale for better readability on mobile
+                        if (isLandscapePdf && viewport.width > 1000) {
+                            manualScale = 1.3; // Slightly larger for wide PDFs
+                        }
+                    }
+                    
+                    renderPage(pageNum);
+                });
+                
+                // Setup pan navigation after DOM is ready
+                setTimeout(setupPanNavigation, 100);
             });
 
             showScreen('pdfViewerScreen');
