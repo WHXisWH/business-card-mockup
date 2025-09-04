@@ -33,10 +33,19 @@ class NFTDataManager {
     async fetchNFTsFromArchitectDAO() {
         try {
             const response = await fetch(`${this.architectDAOUrl}/api/nfts`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            return await response.json();
+            if (!response.ok) {
+                console.warn(`ArchitectDAO API not available (${response.status}), using fallback data`);
+                return null;
+            }
+            const text = await response.text();
+            // 检查是否是HTML响应（表示API不存在）
+            if (text.startsWith('<!doctype') || text.startsWith('<!DOCTYPE')) {
+                console.warn('ArchitectDAO API endpoint not found, using fallback data');
+                return null;
+            }
+            return JSON.parse(text);
         } catch (error) {
-            console.error('Error fetching NFTs from ArchitectDAO:', error);
+            console.warn('ArchitectDAO API not available, using fallback data:', error.message);
             return null;
         }
     }
