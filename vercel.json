@@ -37,7 +37,7 @@
       ]
     },
     {
-      "source": "/**/*.glb",
+      "source": "/(.*)\\.glb$",
       "headers": [
         {
           "key": "Content-Type",
@@ -50,7 +50,7 @@
       ]
     },
     {
-      "source": "/**/*.pdf",
+      "source": "/(.*)\\.pdf$",
       "headers": [
         {
           "key": "Content-Type",
