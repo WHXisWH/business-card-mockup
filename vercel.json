@@ -37,28 +37,28 @@
       ]
     },
     {
-      "source": "/(.*)\\.glb$",
+      "source": "/building-model.glb",
       "headers": [
         {
           "key": "Content-Type",
           "value": "model/gltf-binary"
         },
         {
-          "key": "Cache-Control", 
+          "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
         }
       ]
     },
     {
-      "source": "/(.*)\\.pdf$",
+      "source": "/pdfs/(.*)\\.pdf$",
       "headers": [
         {
           "key": "Content-Type",
           "value": "application/pdf"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400"
         }
       ]
     }
