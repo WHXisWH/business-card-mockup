@@ -1,0 +1,48 @@
+{
+  "name": "nfc-dx-platform",
+  "version": "1.0.0",
+  "description": "建築業界向けNFC連携型DXプラットフォーム",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server . -p 8080 -c-1",
+    "dev": "npx http-server . -p 8080 -c-1 --cors",
+    "build": "npm run minify:css && npm run minify:js",
+    "minify:css": "npx cleancss -o css/styles.min.css css/styles.css",
+    "minify:js": "npx terser js/main.js -o js/main.min.js --compress --mangle",
+    "optimize": "npm run build",
+    "serve": "npm start",
+    "validate": "npx html-validate index.html",
+    "lighthouse": "npx lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json"
+  },
+  "keywords": [
+    "nfc",
+    "dx",
+    "platform",
+    "architecture",
+    "construction",
+    "3d",
+    "bim",
+    "pdf",
+    "pwa"
+  ],
+  "author": "戸田建設株式会社",
+  "license": "MIT",
+  "devDependencies": {
+    "clean-css-cli": "^5.6.2",
+    "html-validate": "^8.7.4",
+    "http-server": "^14.1.1",
+    "lighthouse": "^11.4.0",
+    "terser": "^5.26.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/company/nfc-dx-platform.git"
+  },
+  "homepage": "https://company.github.io/nfc-dx-platform",
+  "bugs": {
+    "url": "https://github.com/company/nfc-dx-platform/issues"
+  }
+}

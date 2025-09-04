@@ -3,12 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="建築業界向けNFC連携型DXプラットフォーム - 触れる、見える、繋がる。建築コミュニケーションの新しいカタチ">
+    <meta name="keywords" content="建築,NFC,DX,プラットフォーム,3D,BIM,PDF,建設">
+    <meta name="author" content="戸田建設株式会社">
+    
+    <!-- PWA対応 -->
+    <meta name="theme-color" content="#87CEEB">
+    <meta name="application-name" content="NFC-DX Platform">
+    
     <title>建築業界向けNFC連携型DXプラットフォーム</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="//ajax.googleapis.com">
+    
+    <!-- Resource Preloads -->
+    <link rel="preload" href="css/styles.css" as="style">
+    <link rel="preload" href="js/main.js" as="script">
+    <link rel="preload" href="building-model.glb" as="fetch" crossorigin="anonymous">
+    
+    <!-- Critical CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- External Libraries with integrity and fallback -->
+    <script 
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"
+        integrity="sha512-3Zq8CPLqfRBgLJKJLWQg8h4n4g/v0Zn3JggCJTRTNwEYDJVpUBkMBwJdQH1g8M6F5cJKGC4e3t6ADFg7vJpvA=="
+        crossorigin="anonymous"
+        defer
+        onerror="console.warn('PDF.js failed to load from CDN')">
+    </script>
+    
+    <script 
+        type="module" 
+        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
+        defer
+        onerror="console.warn('Model Viewer failed to load from CDN')">
+    </script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(error => console.log('SW registration failed'));
+            });
+        }
+    </script>
 </head>
 <body>
+    <!-- メイン画面 -->
     <div id="topScreen" class="screen active">
         <div class="header">
             <h1>案件1 - DXプラットフォーム</h1>
@@ -18,40 +63,41 @@
         <div class="card">
             <h2>📄 ドキュメントライブラリ</h2>
             <p>各種提案資料、プロモーション資料などを格納するエリアです。</p>
-            <button class="btn" onclick="showScreen('documentScreen')">資料を見る</button>
+            <button class="btn" data-target="documentScreen">資料を見る</button>
         </div>
         
         <div class="card">
             <h2>🏗️ BIM/3Dモデルギャラリー</h2>
             <p>プロジェクトの建築モデルを、インタラクティブな3Dで体験できるエリアです。</p>
-            <button class="btn btn-red" onclick="showScreen('categoryScreen')">3Dモデルを見る</button>
+            <button class="btn btn-red" data-target="categoryScreen">3Dモデルを見る</button>
         </div>
     </div>
 
+    <!-- ドキュメントライブラリ画面 -->
     <div id="documentScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="header">
             <h1>ドキュメントライブラリ</h1>
             <p>プロジェクト関連資料</p>
         </div>
         
         <div class="document-grid">
-            <div class="document-item" onclick="showPdfViewer('会社概要', 'pdfs/会社概要.pdf')">
+            <div class="document-item" data-pdf-title="会社概要" data-pdf-url="pdfs/会社概要.pdf">
                 <div class="document-icon">🏢</div>
                 <h3>会社概要</h3>
                 <p>企業情報</p>
             </div>
-            <div class="document-item" onclick="showPdfViewer('環境認証', 'pdfs/環境認証.pdf')">
+            <div class="document-item" data-pdf-title="環境認証" data-pdf-url="pdfs/環境認証.pdf">
                 <div class="document-icon">🌱</div>
                 <h3>環境認証</h3>
                 <p>ISO認証等</p>
             </div>
-            <div class="document-item" onclick="showPdfViewer('施工実績', 'pdfs/施工実績.pdf')">
+            <div class="document-item" data-pdf-title="施工実績" data-pdf-url="pdfs/施工実績.pdf">
                 <div class="document-icon">📈</div>
                 <h3>施工実績</h3>
                 <p>プロジェクト例</p>
             </div>
-            <div class="document-item" onclick="showPdfViewer('提案書', 'pdfs/提案書.pdf')">
+            <div class="document-item" data-pdf-title="提案書" data-pdf-url="pdfs/提案書.pdf">
                 <div class="document-icon">📋</div>
                 <h3>提案書</h3>
                 <p>基本提案</p>
@@ -59,28 +105,29 @@
         </div>
     </div>
 
-    <!-- PDF Viewer Screen (Replaces the four old ones) -->
+    <!-- PDF ビューア画面 -->
     <div id="pdfViewerScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="header"><h1 id="pdf-title">PDF Viewer</h1></div>
         <div class="pdf-viewer-controls">
-            <button id="zoom-out" class="btn" title="缩小">−</button>
-            <button id="zoom-in" class="btn" title="放大">+</button>
-            <button id="rotate-pdf" class="btn" title="旋转90°">⟲</button>
-            <button id="prev-page" class="btn">←</button>
+            <button id="zoom-out" class="btn" title="縮小" aria-label="ズームアウト">−</button>
+            <button id="zoom-in" class="btn" title="拡大" aria-label="ズームイン">+</button>
+            <button id="rotate-pdf" class="btn" title="90度回転" aria-label="回転">⟲</button>
+            <button id="prev-page" class="btn" aria-label="前のページ">←</button>
             <span id="page-num"></span> / <span id="page-count"></span>
-            <button id="next-page" class="btn">→</button>
-            <button id="fit-mode-toggle" class="btn" title="适应模式">⛶</button>
+            <button id="next-page" class="btn" aria-label="次のページ">→</button>
+            <button id="fit-mode-toggle" class="btn" title="フィットモード切替" aria-label="フィット切替">⛶</button>
         </div>
         <div id="pdf-container" class="pdf-container">
             <div id="pdf-canvas-wrapper" class="pdf-canvas-wrapper">
-                <canvas id="pdf-canvas"></canvas>
+                <canvas id="pdf-canvas" aria-label="PDF表示エリア"></canvas>
             </div>
         </div>
     </div>
 
+    <!-- カテゴリ選択画面 -->
     <div id="categoryScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="header">
             <h1>BIM/3Dモデルギャラリー</h1>
             <p>ソリューション別モデル</p>
@@ -90,60 +137,77 @@
             <div class="card">
                 <h2>🚛 物流施設ソリューション</h2>
                 <p>次世代の物流ニーズに応える、高機能な物流倉庫のモデルプランを提案します。</p>
-                <button class="btn" onclick="showScreen('logisticsScreen')">プランを見る</button>
+                <button class="btn" data-target="logisticsScreen">プランを見る</button>
             </div>
             
             <div class="card">
                 <h2>💾 データセンターソリューション</h2>
                 <p>デジタル社会の根幹を支える、高信頼性・高効率なデータセンターのモデルプランを提案します。</p>
-                <button class="btn btn-grey" onclick="showScreen('datacenterScreen')">プランを見る</button>
+                <button class="btn btn-grey" data-target="datacenterScreen">プランを見る</button>
             </div>
         </div>
     </div>
 
+    <!-- 物流施設画面 -->
     <div id="logisticsScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="header">
             <h1>物流施設ソリューション</h1>
             <p>モデルプラン一覧</p>
         </div>
         
         <div class="plan-grid">
-            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan A', '延床面積: 5,000㎡ | 構造: 鉄骨造 | 特徴: 自動化対応')">
+            <div class="plan-btn" 
+                 data-model-title="物流施設ソリューション - Plan A" 
+                 data-model-desc="延床面積: 5,000㎡ | 構造: 鉄骨造 | 特徴: 自動化対応">
                 Plan A - 小規模自動化倉庫
             </div>
-            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan B', '延床面積: 12,000㎡ | 構造: 鉄骨造 | 特徴: 多温度帯対応')">
+            <div class="plan-btn" 
+                 data-model-title="物流施設ソリューション - Plan B" 
+                 data-model-desc="延床面積: 12,000㎡ | 構造: 鉄骨造 | 特徴: 多温度帯対応">
                 Plan B - 中規模配送センター
             </div>
-            <div class="plan-btn" onclick="showViewer('物流施設ソリューション - Plan C', '延床面積: 25,000㎡ | 構造: 鉄骨造 | 特徴: 最新IoT技術')">
+            <div class="plan-btn" 
+                 data-model-title="物流施設ソリューション - Plan C" 
+                 data-model-desc="延床面積: 25,000㎡ | 構造: 鉄骨造 | 特徴: 最新IoT技術">
                 Plan C - 大規模物流ハブ
             </div>
         </div>
     </div>
 
+    <!-- データセンター画面 -->
     <div id="datacenterScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="header">
             <h1>データセンターソリューション</h1>
             <p>モデルプラン一覧</p>
         </div>
         
         <div class="plan-grid">
-            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan A', '延床面積: 3,000㎡ | ��造: RC造 | 特徴: エッジコンピューティング対応')">
+            <div class="plan-btn" 
+                 data-model-title="データセンターソリューション - Plan A" 
+                 data-model-desc="延床面積: 3,000㎡ | 構造: RC造 | 特徴: エッジコンピューティング対応">
                 Plan A - エッジデータセンター
             </div>
-            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan B', '延床面積: 8,000㎡ | 構造: RC造 | 特徴: 高冗長性設計')">
+            <div class="plan-btn" 
+                 data-model-title="データセンターソリューション - Plan B" 
+                 data-model-desc="延床面積: 8,000㎡ | 構造: RC造 | 特徴: 高冗長性設計">
                 Plan B - 企業向けデータセンター
             </div>
-            <div class="plan-btn" onclick="showViewer('データセンターソリューション - Plan C', '延床面積: 20,000㎡ | 構造: RC造 | 特徴: ハイパースケール対応')">
+            <div class="plan-btn" 
+                 data-model-title="データセンターソリューション - Plan C" 
+                 data-model-desc="延床面積: 20,000㎡ | 構造: RC造 | 特徴: ハイパースケール対応">
                 Plan C - クラウドデータセンター
             </div>
         </div>
     </div>
 
+    <!-- 3Dモデルビューア画面 -->
     <div id="viewerScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
-        <button class="nft-btn" onclick="showScreen('nftScreen')">このNFTを受け取る 🎁</button>
+        <button class="back-btn">←</button>
+        <button class="nft-btn btn-architect-dao" data-target="nftScreen">
+            ArchitectDAO で NFT を受け取る 🎁
+        </button>
         
         <div class="viewer-container">
             <model-viewer 
@@ -154,7 +218,12 @@
                 camera-controls 
                 shadow-intensity="1"
                 environment-image="neutral"
+                loading="lazy"
+                reveal="interaction"
                 alt="3D建築モデル">
+                <div slot="progress-bar" class="progress-bar">
+                    <div class="update-bar"></div>
+                </div>
             </model-viewer>
             
             <div class="model-info">
@@ -164,8 +233,9 @@
         </div>
     </div>
 
+    <!-- NFT画面 -->
     <div id="nftScreen" class="screen">
-        <button class="back-btn" onclick="goBack()">←</button>
+        <button class="back-btn">←</button>
         <div class="nft-marketplace">
             <div class="header">
                 <h1>🎁 NFTデジタルギフト</h1>
@@ -174,390 +244,67 @@
             
             <div class="nft-card">
                 <h2 id="nftTitle">建築3Dモデル NFT</h2>
-                <p>この3Dモデルの利用権および所有権をNFTとして無料で受け取れます。</p>
+                <p>この3Dモデルの利用権および所有権をArchitectDAO プラットフォームでNFTとして無料で受け取れます。</p>
                 
-                <div class="nft-price">🎁 無料贈呈</div>
+                <div class="nft-price">🎁 無料贈呈 via ArchitectDAO</div>
                 
                 <div style="margin: 20px 0;">
                     <h3>受け取れる権利:</h3>
                     <ul style="text-align: left; margin: 10px 0;">
-                        <li>3Dモデルの商用利用権</li>
-                        <li>設計図面のダウンロード権</li>
-                        <li>技術仕様書へのアクセス権</li>
-                        <li>将来のアップデート版の優先入手権</li>
+                        <li>✅ 3Dモデルの商用利用権</li>
+                        <li>✅ 設計図面のダウンロード権</li>
+                        <li>✅ 技術仕様書へのアクセス権</li>
+                        <li>✅ 将来のアップデート版の優先入手権</li>
                     </ul>
                 </div>
                 
-                <button class="btn purchase-btn" onclick="receiveNFT()">
-                    🎁 今すぐ受け取る
+                <button class="btn purchase-btn btn-architect-dao" id="receiveNftBtn">
+                    🚀 ArchitectDAO でNFTを受け取る
                 </button>
                 
                 <div style="margin-top: 20px; font-size: 14px; color: #666;">
-                    <p>※ 受け取りにはMetaMaskなどのWeb3ウォレットが必要です</p>
-                    <p>※ ガス代のみお客様負担となります</p>
+                    <p>🔗 Nero Chain 上でNFTとしてミント（発行）されます</p>
+                    <p>💼 ArchitectDAO プラットフォームに移動します</p>
+                    <p>🎯 Web3ウォレットでの署名が必要です</p>
                 </div>
             </div>
             
             <div class="nft-card">
-                <h3>🔗 ブロックチェーン詳細</h3>
-                <p><strong>ネットワーク:</strong> Ethereum Mainnet</p>
-                <p><strong>コントラクト:</strong> 0x1234...abcd</p>
+                <h3>🏗️ ArchitectDAO について</h3>
+                <p><strong>プラットフォーム:</strong> 建築師向けNFTマーケットプレース</p>
+                <p><strong>ブロックチェーン:</strong> Nero Chain (EVM互換)</p>
                 <p><strong>トークン規格:</strong> ERC-721</p>
-                <p><strong>発行者:</strong> 戸田建設株式会社</p>
+                <p><strong>パートナー:</strong> 戸田建設株式会社</p>
+                <p><strong>特徴:</strong> ガスレス取引・高速処理・低コスト</p>
             </div>
         </div>
     </div>
 
-    <script>
-        let screenHistory = ['topScreen'];
-
-        // PDF.js state
-        let pdfDoc = null;
-        let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-        let fitMode = 'width'; // 'width' or 'page'
-        let currentScale = 1;
-        let manualScale = 1;
-        let rotation = 0;
-        const canvas = document.getElementById('pdf-canvas');
-        const ctx = canvas.getContext('2d');
-        const canvasWrapper = document.getElementById('pdf-canvas-wrapper');
-        
-        // Pan navigation state
-        let isPanning = false;
-        let startX, startY, scrollStartX, scrollStartY;
-
-        // Set worker source
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
-
-        function renderPage(num) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(function(page) {
-                const container = document.getElementById('pdf-container');
-                const viewport = page.getViewport({ scale: 1, rotation });
-                
-                // Calculate base scale based on fit mode
-                let baseScale;
-                if (fitMode === 'width') {
-                    baseScale = (container.clientWidth - 40) / viewport.width; // 40px for padding
-                } else { // 'page'
-                    const scaleX = (container.clientWidth - 40) / viewport.width;
-                    const scaleY = (container.clientHeight - 40) / viewport.height;
-                    baseScale = Math.min(scaleX, scaleY);
-                }
-
-                // Apply manual zoom
-                const finalScale = baseScale * manualScale;
-                currentScale = finalScale;
-
-                // For mobile optimization, ensure minimum readable size
-                const minScale = Math.max(baseScale * 0.8, 0.5);
-                const maxScale = baseScale * 5;
-                const clampedScale = Math.max(minScale, Math.min(maxScale, finalScale));
-
-                const devicePixelRatio = window.devicePixelRatio || 1;
-                const scaledViewport = page.getViewport({ scale: clampedScale * devicePixelRatio, rotation });
-
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
-                canvas.style.height = `${scaledViewport.height / devicePixelRatio}px`;
-                canvas.style.width = `${scaledViewport.width / devicePixelRatio}px`;
-
-                // Center canvas if smaller than container
-                const canvasDisplayWidth = scaledViewport.width / devicePixelRatio;
-                const canvasDisplayHeight = scaledViewport.height / devicePixelRatio;
-                
-                if (canvasDisplayWidth < container.clientWidth) {
-                    canvas.style.marginLeft = `${(container.clientWidth - canvasDisplayWidth) / 2}px`;
-                } else {
-                    canvas.style.marginLeft = '0px';
-                }
-                
-                if (canvasDisplayHeight < container.clientHeight) {
-                    canvas.style.marginTop = `${(container.clientHeight - canvasDisplayHeight) / 2}px`;
-                } else {
-                    canvas.style.marginTop = '0px';
-                }
-
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: scaledViewport,
-                    renderInteractiveForms: false,
-                };
-                const renderTask = page.render(renderContext);
-
-                renderTask.promise.then(function() {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
-                });
-            });
-
-            document.getElementById('page-num').textContent = num;
+    <!-- NFT真实数据管理 -->
+    <script src="js/nft-data.js"></script>
+    
+    <!-- メインJavaScript -->
+    <script src="js/main.js" defer></script>
+    
+    <!-- 構造化データ -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "NFC連携型DXプラットフォーム",
+        "description": "建築業界向けNFC連携型DXプラットフォーム",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "JPY"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "戸田建設株式会社"
         }
-
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        function onPrevPage() {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        }
-        document.getElementById('prev-page').addEventListener('click', onPrevPage);
-
-        function onNextPage() {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        }
-        document.getElementById('next-page').addEventListener('click', onNextPage);
-
-        function toggleFitMode() {
-            fitMode = fitMode === 'width' ? 'page' : 'width';
-            manualScale = 1; // Reset manual zoom when changing fit mode
-            console.log('Toggled fit mode to:', fitMode);
-            if (pdfDoc) {
-                queueRenderPage(pageNum);
-            }
-        }
-        document.getElementById('fit-mode-toggle').addEventListener('click', toggleFitMode);
-
-        // Zoom functions
-        function zoomIn() {
-            manualScale = Math.min(manualScale * 1.2, 5);
-            if (pdfDoc) {
-                queueRenderPage(pageNum);
-            }
-        }
-        document.getElementById('zoom-in').addEventListener('click', zoomIn);
-
-        function zoomOut() {
-            manualScale = Math.max(manualScale / 1.2, 0.5);
-            if (pdfDoc) {
-                queueRenderPage(pageNum);
-            }
-        }
-        document.getElementById('zoom-out').addEventListener('click', zoomOut);
-
-        // Rotation function
-        function rotatePdf() {
-            rotation = (rotation + 90) % 360;
-            if (pdfDoc) {
-                queueRenderPage(pageNum);
-            }
-        }
-        document.getElementById('rotate-pdf').addEventListener('click', rotatePdf);
-
-        // Pan navigation for mobile
-        function setupPanNavigation() {
-            // Mouse events
-            canvasWrapper.addEventListener('mousedown', function(e) {
-                isPanning = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                scrollStartX = canvasWrapper.scrollLeft;
-                scrollStartY = canvasWrapper.scrollTop;
-                canvasWrapper.style.cursor = 'grabbing';
-                e.preventDefault();
-            });
-
-            document.addEventListener('mousemove', function(e) {
-                if (!isPanning) return;
-                const dx = startX - e.clientX;
-                const dy = startY - e.clientY;
-                canvasWrapper.scrollLeft = scrollStartX + dx;
-                canvasWrapper.scrollTop = scrollStartY + dy;
-                e.preventDefault();
-            });
-
-            document.addEventListener('mouseup', function(e) {
-                isPanning = false;
-                canvasWrapper.style.cursor = 'grab';
-            });
-
-            // Touch events for mobile
-            canvasWrapper.addEventListener('touchstart', function(e) {
-                if (e.touches.length === 1) {
-                    isPanning = true;
-                    startX = e.touches[0].clientX;
-                    startY = e.touches[0].clientY;
-                    scrollStartX = canvasWrapper.scrollLeft;
-                    scrollStartY = canvasWrapper.scrollTop;
-                    e.preventDefault();
-                }
-            });
-
-            canvasWrapper.addEventListener('touchmove', function(e) {
-                if (isPanning && e.touches.length === 1) {
-                    const dx = startX - e.touches[0].clientX;
-                    const dy = startY - e.touches[0].clientY;
-                    canvasWrapper.scrollLeft = scrollStartX + dx;
-                    canvasWrapper.scrollTop = scrollStartY + dy;
-                    e.preventDefault();
-                }
-            });
-
-            canvasWrapper.addEventListener('touchend', function(e) {
-                isPanning = false;
-            });
-
-            // Pinch zoom for mobile
-            let initialDistance = 0;
-            let initialScale = 1;
-
-            canvasWrapper.addEventListener('touchstart', function(e) {
-                if (e.touches.length === 2) {
-                    initialDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                    initialScale = manualScale;
-                    e.preventDefault();
-                }
-            });
-
-            canvasWrapper.addEventListener('touchmove', function(e) {
-                if (e.touches.length === 2) {
-                    const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
-                    const scaleChange = currentDistance / initialDistance;
-                    manualScale = Math.max(0.5, Math.min(5, initialScale * scaleChange));
-                    queueRenderPage(pageNum);
-                    e.preventDefault();
-                }
-            });
-        }
-
-        function getTouchDistance(touch1, touch2) {
-            const dx = touch1.clientX - touch2.clientX;
-            const dy = touch1.clientY - touch2.clientY;
-            return Math.sqrt(dx * dx + dy * dy);
-        }
-
-        function showScreen(screenId) {
-            console.log('Attempting to show screen:', screenId);
-            if (screenId === 'topScreen') {
-                screenHistory = ['topScreen'];
-            } else {
-                if (screenHistory[screenHistory.length - 1] !== screenId) {
-                    screenHistory.push(screenId);
-                }
-            }
-
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(screen => screen.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            console.log('Screen shown:', screenId);
-            console.log('Current screen history:', screenHistory);
-        }
-
-        function showPdfViewer(title, url) {
-            console.log('Attempting to show PDF viewer for:', title, 'with URL:', url);
-            document.getElementById('pdf-title').textContent = title;
-            
-            // Reset all PDF viewer state on new PDF
-            fitMode = 'width';
-            manualScale = 1;
-            rotation = 0;
-            currentScale = 1;
-            
-            pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
-                pdfDoc = pdfDoc_;
-                document.getElementById('page-count').textContent = pdfDoc.numPages;
-                pageNum = 1;
-                
-                // Determine optimal initial settings based on PDF characteristics
-                pdfDoc.getPage(1).then(function(page) {
-                    const viewport = page.getViewport({ scale: 1 });
-                    const aspectRatio = viewport.width / viewport.height;
-                    const isMobile = window.innerWidth < 768;
-                    const isLandscapePdf = aspectRatio > 1.4;
-                    const isPortraitPdf = aspectRatio < 0.8;
-                    
-                    // Smart initial settings for mobile
-                    if (isMobile) {
-                        if (isLandscapePdf) {
-                            // For landscape PDFs like A3, start with page fit mode for overview
-                            fitMode = 'page';
-                            console.log('Landscape PDF detected - using page fit mode for overview');
-                        } else if (isPortraitPdf) {
-                            // For portrait PDFs like A4, width fit is usually better
-                            fitMode = 'width';
-                            console.log('Portrait PDF detected - using width fit mode');
-                        }
-                        
-                        // Adjust initial manual scale for better readability on mobile
-                        if (isLandscapePdf && viewport.width > 1000) {
-                            manualScale = 1.3; // Slightly larger for wide PDFs
-                        }
-                    }
-                    
-                    renderPage(pageNum);
-                });
-                
-                // Setup pan navigation after DOM is ready
-                setTimeout(setupPanNavigation, 100);
-            });
-
-            showScreen('pdfViewerScreen');
-            console.log('PDF viewer setup complete.');
-        }
-        
-        function showViewer(title, description) {
-            console.log('Attempting to show viewer with title:', title, 'and description:', description);
-            document.getElementById('modelTitle').textContent = title;
-            document.getElementById('modelDescription').textContent = description;
-            document.getElementById('nftTitle').textContent = title + ' NFT';
-            showScreen('viewerScreen');
-            console.log('Viewer setup complete.');
-        }
-        
-        function goBack() {
-            console.log('Attempting to go back. Current history:', screenHistory);
-            if (screenHistory.length > 1) {
-                const currentScreenId = screenHistory[screenHistory.length - 1];
-                screenHistory.pop();
-                const targetScreenId = screenHistory[screenHistory.length - 1];
-                
-                if (currentScreenId === 'pdfViewerScreen' && pdfDoc) {
-                    if (pdfDoc) {
-                       pdfDoc.destroy();
-                    }
-                    pdfDoc = null;
-                    const context = canvas.getContext('2d');
-                    context.clearRect(0, 0, canvas.width, canvas.height);
-                }
-
-                const screens = document.querySelectorAll('.screen');
-                screens.forEach(screen => screen.classList.remove('active'));
-                document.getElementById(targetScreenId).classList.add('active');
-                console.log('Navigated back to:', targetScreenId);
-            } else {
-                showScreen('topScreen');
-                console.log('Navigated to top screen as history is empty.');
-            }
-            console.log('Updated screen history:', screenHistory);
-        }
-        
-        function receiveNFT() {
-            alert(`🎁 NFTギフト受け取り機能はモックです。
-
-実際のシステムでは、Web3ウォレットとの連携により、ブロックチェーン上でのNFT転送処理が行われます。
-
-受け取り後は、お客様のウォレットに建築3DモデルのNFTが無料で転送され、関連する利用権や所有権が付与されます。
-
-戸田建設からのデジタルギフトをお楽しみください！`);
-        }
-        
-        // NFC機能のシミュレーション
-        if ('serviceWorker' in navigator) {
-            console.log('NFC連携型DXプラットフォームが起動しました');
-        }
+    }
     </script>
 </body>
 </html>
