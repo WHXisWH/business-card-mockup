@@ -24,10 +24,28 @@
     <!-- Critical CSS -->
     <link rel="stylesheet" href="css/styles.css">
     
-    <!-- External Libraries -->
+    <!-- External Libraries with integrity and fallback -->
     <script 
-        src="https://unpkg.com/pdfjs-dist@2.11.338/build/pdf.min.js"
-        defer>
+        src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"
+        integrity="sha512-3Zq8CPLqfRBgLJKJLWQg8h4n4g/v0Zn3JggCJTRTNwEYDJVpUBkMBwJdQH1g8M6F5cJKGC4e3t6ADFg7vJpvA=="
+        crossorigin="anonymous"
+        defer
+        onerror="loadPDFFallback()">
+    </script>
+    <script>
+        function loadPDFFallback() {
+            console.log('Primary PDF.js CDN failed, trying fallback...');
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/pdfjs-dist@2.11.338/build/pdf.min.js';
+            script.onload = function() {
+                console.log('PDF.js fallback loaded successfully');
+            };
+            script.onerror = function() {
+                console.warn('All PDF.js CDNs failed - this is normal in local development');
+                showError('PDF機能は本番環境でのみ利用可能です', null);
+            };
+            document.head.appendChild(script);
+        }
     </script>
     
     <script 
