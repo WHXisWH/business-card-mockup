@@ -4,13 +4,13 @@
 const CACHE_NAME = 'nfc-dx-platform-v1.0.0';
 const STATIC_CACHE_NAME = 'nfc-dx-platform-static-v1.0.0';
 
-// キャッシュするリソース
-const CACHE_RESOURCES = [
+// キャッシュするリソース（アプリケーションシェル）
+const APP_SHELL_RESOURCES = [
     '/',
     '/index.html',
     '/css/styles.css',
-    '/js/main.js',
-    '/building-model.glb'
+    '/js/main.js'
+    // 大容量ファイル (glb, pdfs) は動的にキャッシュするため、ここには含めない
 ];
 
 // CDN リソース（オプション）
@@ -20,24 +20,16 @@ const CDN_RESOURCES = [
     'https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js'
 ];
 
-// 大きなPDFファイル（条件付きキャッシュ）
-const LARGE_RESOURCES = [
-    '/pdfs/会社概要.pdf',
-    '/pdfs/提案書.pdf', 
-    '/pdfs/環境認証.pdf'
-    // 施工実績.pdf (13MB) は除外 - 必要時のみ読み込み
-];
-
-// インストール時の処理
+// インストール時の処理：軽量なアプケーションシェルのみをキャッシュする
 self.addEventListener('install', event => {
     console.log('Service Worker: Installing...');
     
     event.waitUntil(
         Promise.all([
-            // 静的リソースをキャッシュ
+            // 静的リソース（アプリケーションシェル）をキャッシュ
             caches.open(STATIC_CACHE_NAME).then(cache => {
-                console.log('Service Worker: Caching static resources');
-                return cache.addAll(CACHE_RESOURCES);
+                console.log('Service Worker: Caching app shell resources');
+                return cache.addAll(APP_SHELL_RESOURCES);
             }),
             
             // CDNリソースをキャッシュ（エラーを無視）
@@ -47,18 +39,6 @@ self.addEventListener('install', event => {
                     CDN_RESOURCES.map(url => 
                         cache.add(url).catch(err => {
                             console.warn(`Failed to cache CDN resource: ${url}`, err);
-                        })
-                    )
-                );
-            }),
-            
-            // 小さなPDFファイルをキャッシュ
-            caches.open(CACHE_NAME).then(cache => {
-                console.log('Service Worker: Caching PDF resources');
-                return Promise.allSettled(
-                    LARGE_RESOURCES.map(url => 
-                        cache.add(url).catch(err => {
-                            console.warn(`Failed to cache PDF: ${url}`, err);
                         })
                     )
                 );
@@ -125,9 +105,9 @@ async function handlePdfRequest(request) {
     const url = new URL(request.url);
     
     try {
-        // 大きなPDFファイル（施工実績.pdf）は Network First
+        // 大きなPDFファイル（施工実績.pdf）は Stale-While-Revalidate
         if (url.pathname.includes('施工実績.pdf')) {
-            return await handleNetworkFirst(request);
+            return handleStaleWhileRevalidate(request);
         }
         
         // 小さなPDFファイルは Cache First
@@ -191,27 +171,25 @@ async function handleCacheFirst(request) {
     return response;
 }
 
-// Network First 戦略
-async function handleNetworkFirst(request) {
-    try {
-        console.log('Service Worker: Network first for:', request.url);
-        const response = await fetch(request);
-        
-        // 成功した場合はキャッシュに保存
-        if (response && response.status === 200) {
-            const cache = await caches.open(CACHE_NAME);
+// Stale-While-Revalidate 戦略
+async function handleStaleWhileRevalidate(request) {
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(request);
+
+    const networkFetch = fetch(request).then(response => {
+        // ネットワークリクエストが成功した場合、キャッシュを更新
+        if (response.ok) {
+            console.log(`Service Worker: Updating cache for ${request.url} from network.`);
             cache.put(request, response.clone());
         }
-        
         return response;
-    } catch (error) {
-        console.log('Service Worker: Network failed, trying cache:', request.url);
-        
-        // ネットワーク失敗時はキャッシュから取得
-        const cache = await caches.open(CACHE_NAME);
-        const staticCache = await caches.open(STATIC_CACHE_NAME);
-        return await cache.match(request) || await staticCache.match(request);
-    }
+    }).catch(err => {
+        // ネットワークが失敗した場合、警告を出す
+        console.warn(`Service Worker: SWR network fetch failed for ${request.url}`, err);
+    });
+
+    // キャッシュがあれば即座に返し、なければネットワークの応答を待つ
+    return cachedResponse || networkFetch;
 }
 
 // エラーレスポンス作成
