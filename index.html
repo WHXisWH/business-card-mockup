@@ -210,16 +210,17 @@
             <model-viewer 
                 id="modelViewer"
                 src="building-model.glb"
-                ar 
                 auto-rotate 
                 camera-controls 
-                shadow-intensity="1"
-                environment-image="neutral"
-                loading="lazy"
-                reveal="interaction"
-                alt="3D建築モデル">
+                loading="eager"
+                reveal="auto"
+                alt="3D建築モデル"
+                style="width: 100%; height: 400px; background-color: #f0f0f0;">
                 <div slot="progress-bar" class="progress-bar">
                     <div class="update-bar"></div>
+                </div>
+                <div slot="error">
+                    <p>モデルの読み込みに失敗しました</p>
                 </div>
             </model-viewer>
             
