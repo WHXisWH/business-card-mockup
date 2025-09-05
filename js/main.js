@@ -398,8 +398,13 @@ function showPdfViewer(title, url) {
 }
 
 // 3Dモデルビューア表示機能
-function showViewer(title, description) {
+function showViewer(title, description, modelSrc) {
     try {
+        const modelViewer = document.getElementById('modelViewer');
+        if (modelViewer) {
+            modelViewer.src = modelSrc;
+        }
+
         const titleElement = document.getElementById('modelTitle');
         const descElement = document.getElementById('modelDescription');
         const nftTitleElement = document.getElementById('nftTitle');
@@ -594,11 +599,15 @@ function setupEventListeners() {
     
     // 3Dモデルプランクリック
     document.addEventListener('click', function(event) {
-        const modelTitle = event.target.closest('.plan-btn')?.getAttribute('data-model-title');
-        const modelDesc = event.target.closest('.plan-btn')?.getAttribute('data-model-desc');
-        if (modelTitle && modelDesc) {
-            event.preventDefault();
-            showViewer(modelTitle, modelDesc);
+        const planBtn = event.target.closest('.plan-btn');
+        if (planBtn) {
+            const modelTitle = planBtn.getAttribute('data-model-title');
+            const modelDesc = planBtn.getAttribute('data-model-desc');
+            const modelSrc = planBtn.getAttribute('data-model-src') || 'building-model.glb'; // フォールバック
+            if (modelTitle && modelDesc) {
+                event.preventDefault();
+                showViewer(modelTitle, modelDesc, modelSrc);
+            }
         }
     });
     
