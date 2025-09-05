@@ -20,7 +20,7 @@
     <!-- Resource Preloads -->
     <link rel="preload" href="css/styles.css" as="style">
     <link rel="preload" href="js/main.js" as="script">
-    <link rel="preload" href="building-model.glb" as="fetch" crossorigin="anonymous">
+    <link rel="preload" href="building-model.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
     
     <!-- Critical CSS -->
     <link rel="stylesheet" href="css/styles.css">
@@ -35,7 +35,6 @@
     <script 
         type="module" 
         src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
-        defer
         onerror="console.warn('Model Viewer failed to load from CDN')">
     </script>
     
