@@ -8,7 +8,7 @@ let pdfDoc = null;
 let pageNum = 1;
 let pageRendering = false;
 let pageNumPending = null;
-let fitMode = 'width'; // 'width' or 'page'
+// fitMode removed - unified page fitting mode
 let currentScale = 1;
 let manualScale = 1;
 let rotation = 0;
@@ -20,7 +20,7 @@ const canvasWrapper = document.getElementById('pdf-canvas-wrapper');
 let isPanning = false;
 let startX, startY, scrollStartX, scrollStartY;
 
-// 全屏模式状态
+// 全画面モード状態
 let isFullscreen = false;
 let fullscreenCanvas = null;
 let fullscreenCtx = null;
@@ -90,15 +90,10 @@ function renderPage(num) {
             
             const viewport = page.getViewport({ scale: 1, rotation });
             
-            // フィットモードに基づいてベーススケールを計算
-            let baseScale;
-            if (fitMode === 'width') {
-                baseScale = (container.clientWidth - 40) / viewport.width;
-            } else {
-                const scaleX = (container.clientWidth - 40) / viewport.width;
-                const scaleY = (container.clientHeight - 40) / viewport.height;
-                baseScale = Math.min(scaleX, scaleY);
-            }
+            // ページ適応モード - ページ全体が表示されるように
+            const scaleX = (container.clientWidth - 40) / viewport.width;
+            const scaleY = (container.clientHeight - 40) / viewport.height;
+            const baseScale = Math.min(scaleX, scaleY);
 
             // マニュアルズームを適用
             const finalScale = baseScale * manualScale;
@@ -191,13 +186,7 @@ function onNextPage() {
     queueRenderPage(pageNum);
 }
 
-function toggleFitMode() {
-    fitMode = fitMode === 'width' ? 'page' : 'width';
-    manualScale = 1;
-    if (pdfDoc) {
-        queueRenderPage(pageNum);
-    }
-}
+// toggleFitMode関数は削除されました
 
 // ズーム機能
 function zoomIn() {
@@ -345,7 +334,7 @@ function showPdfViewer(title, url) {
         }
         
         // PDF ビューア状態をリセット
-        fitMode = 'width';
+        // fitMode設定不要
         manualScale = 1;
         rotation = 0;
         currentScale = 1;
@@ -375,9 +364,9 @@ function showPdfViewer(title, url) {
                 // モバイル向けスマート初期設定
                 if (isMobile) {
                     if (isLandscapePdf) {
-                        fitMode = 'page';
+                        // fitMode設定不要
                     } else if (isPortraitPdf) {
-                        fitMode = 'width';
+                        // fitMode設定不要
                     }
                     
                     if (isLandscapePdf && viewport.width > 1000) {
@@ -571,22 +560,19 @@ function setupEventListeners() {
     const zoomInBtn = document.getElementById('zoom-in');
     const zoomOutBtn = document.getElementById('zoom-out');
     const rotateBtn = document.getElementById('rotate-pdf');
-    const fitModeBtn = document.getElementById('fit-mode-toggle');
-
     if (prevPageBtn) prevPageBtn.addEventListener('click', onPrevPage);
     if (nextPageBtn) nextPageBtn.addEventListener('click', onNextPage);
     if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
     if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
     if (rotateBtn) rotateBtn.addEventListener('click', rotatePdf);
-    if (fitModeBtn) fitModeBtn.addEventListener('click', toggleFitMode);
     
-    // 全屏相关按钮
+    // 全画面関連ボタン
     const fullscreenToggleBtn = document.getElementById('fullscreen-toggle');
     const exitFullscreenBtn = document.getElementById('exit-fullscreen');
     if (fullscreenToggleBtn) fullscreenToggleBtn.addEventListener('click', enterFullscreen);
     if (exitFullscreenBtn) exitFullscreenBtn.addEventListener('click', exitFullscreen);
     
-    // 全屏模式下的控制按钮
+    // 全画面モードのコントロールボタン
     const fsPrevPageBtn = document.getElementById('fs-prev-page');
     const fsNextPageBtn = document.getElementById('fs-next-page');
     const fsZoomInBtn = document.getElementById('fs-zoom-in');
@@ -669,7 +655,7 @@ function initializeApp() {
     }
 }
 
-// 全屏PDF查看器功能
+// 全画面PDFビューア機能
 function enterFullscreen() {
     if (!pdfDoc) return;
     
@@ -682,16 +668,16 @@ function enterFullscreen() {
     const fullscreenOverlay = document.getElementById('pdf-fullscreen-overlay');
     fullscreenOverlay.classList.add('active');
     
-    // 同步页面信息
+    // ページ情報同期
     syncFullscreenPageInfo();
     
-    // 渲染全屏页面
+    // 全画面ページレンダリング
     renderFullscreenPage(pageNum);
     
-    // 防止body滚动
+    // body スクロール防止
     document.body.style.overflow = 'hidden';
     
-    // ESC键退出全屏
+    // ESCキーで全画面終了
     document.addEventListener('keydown', handleFullscreenEscape);
 }
 
@@ -703,13 +689,13 @@ function exitFullscreen() {
     const fullscreenOverlay = document.getElementById('pdf-fullscreen-overlay');
     fullscreenOverlay.classList.remove('active');
     
-    // 恢复body滚动
+    // body スクロール復元
     document.body.style.overflow = '';
     
-    // 移除ESC键监听
+    // ESCキー監視削除
     document.removeEventListener('keydown', handleFullscreenEscape);
     
-    // 重新渲染普通模式下的PDF
+    // 通常モードでPDF再レンダリング
     renderPage(pageNum);
 }
 
@@ -731,15 +717,15 @@ function renderFullscreenPage(num) {
             
             const viewport = page.getViewport({ scale: 1, rotation });
             
-            // 全屏模式下适应屏幕尺寸 - 使用更紧密的边距以最大化显示区域
+            // 全画面モードでスクリーンサイズに適応 - 表示領域最大化
             const scaleX = (viewer.clientWidth - 20) / viewport.width;
             const scaleY = (viewer.clientHeight - 20) / viewport.height;
             let baseScale = Math.min(scaleX, scaleY);
             
-            // 应用手动缩放
+            // マニュアルズーム適用
             const finalScale = baseScale * manualScale;
             
-            // 全屏模式下的缩放范围 - 允许更大的缩放范围来适应不同的阅读需求
+            // 全画面モードズーム範囲 - 読みやすさのため広範囲対応
             const minScale = baseScale * 0.3;
             const maxScale = baseScale * 8;
             const clampedScale = Math.max(minScale, Math.min(maxScale, finalScale));
@@ -785,7 +771,7 @@ function renderFullscreenPage(num) {
 }
 
 function syncFullscreenPageInfo() {
-    // 同步页码信息到全屏控制栏
+    // 全画面コントロールバーにページ番号情報同期
     const fsPageNum = document.getElementById('fs-page-num');
     const fsPageCount = document.getElementById('fs-page-count');
     const pageNumElement = document.getElementById('page-num');

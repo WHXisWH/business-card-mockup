@@ -12,7 +12,8 @@
     "optimize": "npm run build",
     "serve": "npm start",
     "validate": "npx html-validate index.html",
-    "lighthouse": "npx lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json"
+    "lighthouse": "npx lighthouse http://localhost:8080 --output=json --output-path=./lighthouse-report.json",
+    "deploy": "echo 'Deploy to Vercel with cache busting version 1.2.0'"
   },
   "keywords": [
     "nfc",

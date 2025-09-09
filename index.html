@@ -22,8 +22,8 @@
     <link rel="preload" href="js/main.js" as="script">
     <link rel="preload" href="public/building-model.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
     
-    <!-- Critical CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- キャッシュ無効化付きクリティカルCSS -->
+    <link rel="stylesheet" href="css/styles.css?v=1.2.0">
     
     <!-- External Libraries -->
     <script 
@@ -42,9 +42,29 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => console.log('SW registered'))
+                navigator.serviceWorker.register('/service-worker.js?v=1.2.0')
+                    .then(registration => {
+                        console.log('SW registered');
+                        // 更新検出時の処理
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // 静かに新バージョンを有効化
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        });
+                        // Service Worker更新をチェック
+                        registration.update();
+                    })
                     .catch(error => console.log('SW registration failed'));
+                    
+                // Service Workerからのメッセージをリッスン
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    // 新しいバージョンがアクティブになった際の静かな処理
+                    console.log('New version activated');
+                });
             });
         }
     </script>
@@ -113,8 +133,7 @@
             <button id="prev-page" class="btn" aria-label="前のページ">←</button>
             <span id="page-num"></span> / <span id="page-count"></span>
             <button id="next-page" class="btn" aria-label="次のページ">→</button>
-            <button id="fit-mode-toggle" class="btn" title="フィットモード切替" aria-label="フィット切替">⛶</button>
-            <button id="fullscreen-toggle" class="btn" title="全画面表示" aria-label="全画面">⛶</button>
+            <button id="fullscreen-toggle" class="btn" title="全画面表示" aria-label="全画面">⤴</button>
         </div>
         <div id="pdf-container" class="pdf-container">
             <div id="pdf-canvas-wrapper" class="pdf-canvas-wrapper">
@@ -291,7 +310,7 @@
         </div>
     </div>
 
-    <!-- PDF 全屏覆盖层 -->
+    <!-- PDF全画面オーバーレイ -->
     <div id="pdf-fullscreen-overlay" class="pdf-fullscreen-overlay">
         <div class="pdf-fullscreen-container">
             <div class="pdf-fullscreen-controls">
@@ -309,11 +328,11 @@
         </div>
     </div>
 
-    <!-- NFT真实数据管理 -->
-    <script src="js/nft-data.js"></script>
+    <!-- NFTデータ管理（キャッシュ無効化付き） -->
+    <script src="js/nft-data.js?v=1.2.0"></script>
     
-    <!-- メインJavaScript -->
-    <script src="js/main.js" defer></script>
+    <!-- メインJavaScript（キャッシュ無効化付き） -->
+    <script src="js/main.js?v=1.2.0" defer></script>
     
     <!-- 構造化データ -->
     <script type="application/ld+json">

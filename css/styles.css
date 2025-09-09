@@ -249,7 +249,7 @@ body {
     gap: 8px;
 }
 
-/* PDF 全屏模式 */
+/* PDF全画面モード */
 .pdf-fullscreen-overlay {
     position: fixed;
     top: 0;
@@ -327,7 +327,7 @@ body {
     border-color: #ff4444;
 }
 
-/* 移动设备上的全屏优化 */
+/* モバイルデバイスでの全画面最適化 */
 @media (max-width: 768px) {
     .pdf-fullscreen-controls {
         padding: 5px 8px;

@@ -1,8 +1,8 @@
 // Service Worker - NFC连携型DXプラットフォーム
 // キャッシュとオフライン機能を提供
 
-const CACHE_NAME = 'nfc-dx-platform-v1.1.0';
-const STATIC_CACHE_NAME = 'nfc-dx-platform-static-v1.1.0';
+const CACHE_NAME = 'nfc-dx-platform-v1.2.0';
+const STATIC_CACHE_NAME = 'nfc-dx-platform-static-v1.2.0';
 
 // キャッシュするリソース（アプリケーションシェル）
 const APP_SHELL_RESOURCES = [
@@ -50,6 +50,13 @@ self.addEventListener('install', event => {
             return self.skipWaiting();
         })
     );
+});
+
+// メッセージ処理
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
 // アクティベート時の処理
@@ -133,6 +140,16 @@ async function handleModelRequest(request) {
 // 一般リソースのリクエスト処理
 async function handleGeneralRequest(request) {
     try {
+        // HTMLファイルは最新版を確実に取得するためネットワーク優先
+        if (request.destination === 'document' || request.url.endsWith('.html') || 
+            request.url.endsWith('/') || request.url.includes('index')) {
+            return await handleNetworkFirst(request);
+        }
+        // CSSとJSファイルもネットワーク優先
+        if (request.url.endsWith('.css') || request.url.endsWith('.js')) {
+            return await handleNetworkFirst(request);
+        }
+        // その他のリソースはキャッシュ優先
         return await handleCacheFirst(request);
     } catch (error) {
         console.error('General request failed:', error);
@@ -172,7 +189,7 @@ async function handleCacheFirst(request) {
     return response;
 }
 
-// Network First 戦略（GLB文件用）
+// Network First 戦略（GLBファイルや重要なリソース用）
 async function handleNetworkFirst(request) {
     const cache = await caches.open(CACHE_NAME);
     
