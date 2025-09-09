@@ -276,24 +276,29 @@ body {
 .pdf-fullscreen-controls {
     background: rgba(0,0,0,0.8);
     color: white;
-    padding: 10px;
+    padding: 8px 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    min-height: 60px;
+    gap: 8px;
+    flex-wrap: nowrap;
+    min-height: 45px;
+    max-height: 45px;
 }
 
 .pdf-fullscreen-controls .btn {
     background: rgba(255,255,255,0.2);
     border: 1px solid rgba(255,255,255,0.3);
     color: white;
-    padding: 8px 12px;
-    border-radius: 5px;
-    font-size: 14px;
-    min-width: 40px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    min-width: 35px;
     cursor: pointer;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .pdf-fullscreen-controls .btn:hover {
@@ -306,19 +311,42 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #333;
+    background: #222;
+    padding: 10px;
 }
 
 .pdf-fullscreen-canvas {
     max-width: 100%;
     max-height: 100%;
     border-radius: 0;
-    box-shadow: none;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1);
 }
 
 #exit-fullscreen {
     background: #ff4444;
     border-color: #ff4444;
+}
+
+/* 移动设备上的全屏优化 */
+@media (max-width: 768px) {
+    .pdf-fullscreen-controls {
+        padding: 5px 8px;
+        min-height: 40px;
+        max-height: 40px;
+        font-size: 12px;
+    }
+    
+    .pdf-fullscreen-controls .btn {
+        padding: 4px 8px;
+        font-size: 12px;
+        min-width: 30px;
+        height: 28px;
+        gap: 5px;
+    }
+    
+    .pdf-fullscreen-controls span {
+        font-size: 12px;
+    }
 }
 
 .pdf-viewer-controls .btn {

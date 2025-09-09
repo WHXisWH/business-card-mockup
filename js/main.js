@@ -592,14 +592,12 @@ function setupEventListeners() {
     const fsZoomInBtn = document.getElementById('fs-zoom-in');
     const fsZoomOutBtn = document.getElementById('fs-zoom-out');
     const fsRotateBtn = document.getElementById('fs-rotate-pdf');
-    const fsFitModeBtn = document.getElementById('fs-fit-mode-toggle');
     
     if (fsPrevPageBtn) fsPrevPageBtn.addEventListener('click', onPrevPage);
     if (fsNextPageBtn) fsNextPageBtn.addEventListener('click', onNextPage);
     if (fsZoomInBtn) fsZoomInBtn.addEventListener('click', zoomIn);
     if (fsZoomOutBtn) fsZoomOutBtn.addEventListener('click', zoomOut);
     if (fsRotateBtn) fsRotateBtn.addEventListener('click', rotatePdf);
-    if (fsFitModeBtn) fsFitModeBtn.addEventListener('click', toggleFitMode);
     
     // 戻るボタン（全ての画面共通）
     document.addEventListener('click', function(event) {
@@ -733,17 +731,17 @@ function renderFullscreenPage(num) {
             
             const viewport = page.getViewport({ scale: 1, rotation });
             
-            // 全屏模式下适应屏幕尺寸
-            const scaleX = (viewer.clientWidth - 40) / viewport.width;
-            const scaleY = (viewer.clientHeight - 40) / viewport.height;
+            // 全屏模式下适应屏幕尺寸 - 使用更紧密的边距以最大化显示区域
+            const scaleX = (viewer.clientWidth - 20) / viewport.width;
+            const scaleY = (viewer.clientHeight - 20) / viewport.height;
             let baseScale = Math.min(scaleX, scaleY);
             
             // 应用手动缩放
             const finalScale = baseScale * manualScale;
             
-            // 限制缩放范围
-            const minScale = baseScale * 0.5;
-            const maxScale = baseScale * 5;
+            // 全屏模式下的缩放范围 - 允许更大的缩放范围来适应不同的阅读需求
+            const minScale = baseScale * 0.3;
+            const maxScale = baseScale * 8;
             const clampedScale = Math.max(minScale, Math.min(maxScale, finalScale));
             
             const devicePixelRatio = window.devicePixelRatio || 1;
