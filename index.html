@@ -20,7 +20,7 @@
     <!-- Resource Preloads -->
     <link rel="preload" href="css/styles.css" as="style">
     <link rel="preload" href="js/main.js" as="script">
-    <link rel="preload" href="building-model.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
+    <link rel="preload" href="public/building-model.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
     
     <!-- Critical CSS -->
     <link rel="stylesheet" href="css/styles.css">
@@ -114,6 +114,7 @@
             <span id="page-num"></span> / <span id="page-count"></span>
             <button id="next-page" class="btn" aria-label="次のページ">→</button>
             <button id="fit-mode-toggle" class="btn" title="フィットモード切替" aria-label="フィット切替">⛶</button>
+            <button id="fullscreen-toggle" class="btn" title="全画面表示" aria-label="全画面">⛶</button>
         </div>
         <div id="pdf-container" class="pdf-container">
             <div id="pdf-canvas-wrapper" class="pdf-canvas-wrapper">
@@ -155,22 +156,28 @@
         
         <div class="plan-grid">
             <div class="plan-btn" 
-                 data-model-src="warehouse_logistics_platform.glb"
+                 data-model-src="public/warehouse_logistics_platform.glb"
                  data-model-title="ドック型物流センター" 
                  data-model-desc="接車ドックで効率的に荷捌きできる物流拠点">
                 ドック型物流センター
             </div>
             <div class="plan-btn" 
-                 data-model-src="souko_SideRampWay.glb"
+                 data-model-src="public/souko_SideRampWay.glb"
                  data-model-title="ランプウェイ式物流センター" 
                  data-model-desc="片側ランプで各階へ直接搬入可能な物流拠点">
                 ランプウェイ式物流センター
             </div>
             <div class="plan-btn" 
-                 data-model-src="DoubleRamp.glb"
+                 data-model-src="public/DoubleRamp.glb"
                  data-model-title="ダブルランプウェイ式物流センター" 
                  data-model-desc="両側ランプで大量車両が効率往来できる大規模拠点">
                 ダブルランプウェイ式物流センター
+            </div>
+            <div class="plan-btn" 
+                 data-model-src="public/dryWearhouse.glb"
+                 data-model-title="ドライ倉庫レイアウト" 
+                 data-model-desc="ドライ貨物専用の温湿度管理された保管施設">
+                ドライ倉庫レイアウト
             </div>
         </div>
     </div>
@@ -185,20 +192,22 @@
         
         <div class="plan-grid">
             <div class="plan-btn" 
-                 data-model-src="DataCenter_AirCooling.glb"
-                 data-model-title="空冷データーセンター" 
+                 data-model-src="public/DataCenter_AirCooling.glb"
+                 data-model-title="空冷方式" 
                  data-model-desc="ホットアイル／コールドアイル方式で空気冷却するデータセンター">
-                空冷データーセンター
+                空冷方式
             </div>
             <div class="plan-btn" 
-                 data-model-title="DLC方式データセンター" 
+                 data-model-src="public/DLCHall.glb"
+                 data-model-title="DLC方式" 
                  data-model-desc="コールドプレートなどを用いて液体をサーバー部品に直接接触させ熱を除去する。">
-                DLC方式データセンター
+                DLC方式
             </div>
             <div class="plan-btn" 
-                 data-model-title="液浸方式データセンター" 
+                 data-model-src="public/LiquidHall.glb"
+                 data-model-title="液浸方式" 
                  data-model-desc="サーバー全体を誘電体液に浸漬し、大量の熱を効率的に吸収・排出する。">
-                液浸方式データセンター
+                液浸方式
             </div>
         </div>
     </div>
@@ -213,7 +222,7 @@
         <div class="viewer-container">
             <model-viewer 
                 id="modelViewer"
-                src="building-model.glb"
+                src="public/building-model.glb"
                 auto-rotate 
                 camera-controls 
                 loading="eager"
@@ -278,6 +287,25 @@
                 <p><strong>トークン規格:</strong> ERC-721</p>
                 <p><strong>パートナー:</strong> 戸田建設株式会社</p>
                 <p><strong>特徴:</strong> ガスレス取引・高速処理・低コスト</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF 全屏覆盖层 -->
+    <div id="pdf-fullscreen-overlay" class="pdf-fullscreen-overlay">
+        <div class="pdf-fullscreen-container">
+            <div class="pdf-fullscreen-controls">
+                <button id="fs-zoom-out" class="btn" title="縮小" aria-label="ズームアウト">−</button>
+                <button id="fs-zoom-in" class="btn" title="拡大" aria-label="ズームイン">+</button>
+                <button id="fs-rotate-pdf" class="btn" title="90度回転" aria-label="回転">⟲</button>
+                <button id="fs-prev-page" class="btn" aria-label="前のページ">←</button>
+                <span id="fs-page-num"></span> / <span id="fs-page-count"></span>
+                <button id="fs-next-page" class="btn" aria-label="次のページ">→</button>
+                <button id="fs-fit-mode-toggle" class="btn" title="フィットモード切替" aria-label="フィット切替">⛶</button>
+                <button id="exit-fullscreen" class="btn" title="全画面終了" aria-label="終了">✕</button>
+            </div>
+            <div class="pdf-fullscreen-viewer">
+                <canvas id="pdf-fullscreen-canvas" class="pdf-fullscreen-canvas" aria-label="PDF全画面表示エリア"></canvas>
             </div>
         </div>
     </div>

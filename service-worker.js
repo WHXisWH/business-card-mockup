@@ -1,15 +1,16 @@
 // Service Worker - NFC连携型DXプラットフォーム
 // キャッシュとオフライン機能を提供
 
-const CACHE_NAME = 'nfc-dx-platform-v1.0.0';
-const STATIC_CACHE_NAME = 'nfc-dx-platform-static-v1.0.0';
+const CACHE_NAME = 'nfc-dx-platform-v1.1.0';
+const STATIC_CACHE_NAME = 'nfc-dx-platform-static-v1.1.0';
 
 // キャッシュするリソース（アプリケーションシェル）
 const APP_SHELL_RESOURCES = [
     '/',
     '/index.html',
     '/css/styles.css',
-    '/js/main.js'
+    '/js/main.js',
+    '/js/nft-data.js'
     // 大容量ファイル (glb, pdfs) は動的にキャッシュするため、ここには含めない
 ];
 
@@ -121,8 +122,8 @@ async function handlePdfRequest(request) {
 // 3D モデルファイルのリクエスト処理
 async function handleModelRequest(request) {
     try {
-        // 3Dモデルは Cache First（大きなファイルなので）
-        return await handleCacheFirst(request);
+        // 3Dモデルは Network First（更新を優先）で、フォールバックでキャッシュを使用
+        return await handleNetworkFirst(request);
     } catch (error) {
         console.error('3D model request failed:', error);
         return createErrorResponse('3Dモデルの読み込みに失敗しました');
@@ -169,6 +170,38 @@ async function handleCacheFirst(request) {
     }
     
     return response;
+}
+
+// Network First 戦略（GLB文件用）
+async function handleNetworkFirst(request) {
+    const cache = await caches.open(CACHE_NAME);
+    
+    try {
+        // まずネットワークから取得を試みる
+        console.log('Service Worker: Trying network first for:', request.url);
+        const response = await fetch(request);
+        
+        // 成功した場合はキャッシュに保存
+        if (response && response.status === 200) {
+            const responseClone = response.clone();
+            cache.put(request, responseClone);
+            console.log('Service Worker: Updated cache with fresh content:', request.url);
+        }
+        
+        return response;
+    } catch (error) {
+        // ネットワークが失敗した場合はキャッシュから取得
+        console.log('Service Worker: Network failed, trying cache for:', request.url);
+        const cachedResponse = await cache.match(request);
+        
+        if (cachedResponse) {
+            console.log('Service Worker: Serving from cache:', request.url);
+            return cachedResponse;
+        }
+        
+        // キャッシュにもない場合はエラーを投げる
+        throw new Error(`Neither network nor cache available for ${request.url}`);
+    }
 }
 
 // Stale-While-Revalidate 戦略

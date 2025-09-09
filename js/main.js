@@ -20,6 +20,11 @@ const canvasWrapper = document.getElementById('pdf-canvas-wrapper');
 let isPanning = false;
 let startX, startY, scrollStartX, scrollStartY;
 
+// 全屏模式状态
+let isFullscreen = false;
+let fullscreenCanvas = null;
+let fullscreenCtx = null;
+
 // PDF.js ワーカー設定
 if (typeof pdfjsLib !== 'undefined') {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
@@ -164,7 +169,12 @@ function queueRenderPage(num) {
     if (pageRendering) {
         pageNumPending = num;
     } else {
-        renderPage(num);
+        if (isFullscreen) {
+            renderFullscreenPage(num);
+            syncFullscreenPageInfo();
+        } else {
+            renderPage(num);
+        }
     }
 }
 
@@ -570,6 +580,27 @@ function setupEventListeners() {
     if (rotateBtn) rotateBtn.addEventListener('click', rotatePdf);
     if (fitModeBtn) fitModeBtn.addEventListener('click', toggleFitMode);
     
+    // 全屏相关按钮
+    const fullscreenToggleBtn = document.getElementById('fullscreen-toggle');
+    const exitFullscreenBtn = document.getElementById('exit-fullscreen');
+    if (fullscreenToggleBtn) fullscreenToggleBtn.addEventListener('click', enterFullscreen);
+    if (exitFullscreenBtn) exitFullscreenBtn.addEventListener('click', exitFullscreen);
+    
+    // 全屏模式下的控制按钮
+    const fsPrevPageBtn = document.getElementById('fs-prev-page');
+    const fsNextPageBtn = document.getElementById('fs-next-page');
+    const fsZoomInBtn = document.getElementById('fs-zoom-in');
+    const fsZoomOutBtn = document.getElementById('fs-zoom-out');
+    const fsRotateBtn = document.getElementById('fs-rotate-pdf');
+    const fsFitModeBtn = document.getElementById('fs-fit-mode-toggle');
+    
+    if (fsPrevPageBtn) fsPrevPageBtn.addEventListener('click', onPrevPage);
+    if (fsNextPageBtn) fsNextPageBtn.addEventListener('click', onNextPage);
+    if (fsZoomInBtn) fsZoomInBtn.addEventListener('click', zoomIn);
+    if (fsZoomOutBtn) fsZoomOutBtn.addEventListener('click', zoomOut);
+    if (fsRotateBtn) fsRotateBtn.addEventListener('click', rotatePdf);
+    if (fsFitModeBtn) fsFitModeBtn.addEventListener('click', toggleFitMode);
+    
     // 戻るボタン（全ての画面共通）
     document.addEventListener('click', function(event) {
         if (event.target.classList.contains('back-btn')) {
@@ -637,6 +668,136 @@ function initializeApp() {
         
     } catch (error) {
         showError('アプリケーションの初期化中にエラーが発生しました', error);
+    }
+}
+
+// 全屏PDF查看器功能
+function enterFullscreen() {
+    if (!pdfDoc) return;
+    
+    isFullscreen = true;
+    fullscreenCanvas = document.getElementById('pdf-fullscreen-canvas');
+    fullscreenCtx = fullscreenCanvas ? fullscreenCanvas.getContext('2d') : null;
+    
+    if (!fullscreenCanvas || !fullscreenCtx) return;
+    
+    const fullscreenOverlay = document.getElementById('pdf-fullscreen-overlay');
+    fullscreenOverlay.classList.add('active');
+    
+    // 同步页面信息
+    syncFullscreenPageInfo();
+    
+    // 渲染全屏页面
+    renderFullscreenPage(pageNum);
+    
+    // 防止body滚动
+    document.body.style.overflow = 'hidden';
+    
+    // ESC键退出全屏
+    document.addEventListener('keydown', handleFullscreenEscape);
+}
+
+function exitFullscreen() {
+    if (!isFullscreen) return;
+    
+    isFullscreen = false;
+    
+    const fullscreenOverlay = document.getElementById('pdf-fullscreen-overlay');
+    fullscreenOverlay.classList.remove('active');
+    
+    // 恢复body滚动
+    document.body.style.overflow = '';
+    
+    // 移除ESC键监听
+    document.removeEventListener('keydown', handleFullscreenEscape);
+    
+    // 重新渲染普通模式下的PDF
+    renderPage(pageNum);
+}
+
+function handleFullscreenEscape(e) {
+    if (e.key === 'Escape') {
+        exitFullscreen();
+    }
+}
+
+function renderFullscreenPage(num) {
+    if (!pdfDoc || !fullscreenCanvas || !fullscreenCtx || !isFullscreen) return;
+    
+    pageRendering = true;
+    
+    try {
+        pdfDoc.getPage(num).then(function(page) {
+            const viewer = document.querySelector('.pdf-fullscreen-viewer');
+            if (!viewer) return;
+            
+            const viewport = page.getViewport({ scale: 1, rotation });
+            
+            // 全屏模式下适应屏幕尺寸
+            const scaleX = (viewer.clientWidth - 40) / viewport.width;
+            const scaleY = (viewer.clientHeight - 40) / viewport.height;
+            let baseScale = Math.min(scaleX, scaleY);
+            
+            // 应用手动缩放
+            const finalScale = baseScale * manualScale;
+            
+            // 限制缩放范围
+            const minScale = baseScale * 0.5;
+            const maxScale = baseScale * 5;
+            const clampedScale = Math.max(minScale, Math.min(maxScale, finalScale));
+            
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const scaledViewport = page.getViewport({ 
+                scale: clampedScale * devicePixelRatio, 
+                rotation 
+            });
+            
+            fullscreenCanvas.height = scaledViewport.height;
+            fullscreenCanvas.width = scaledViewport.width;
+            fullscreenCanvas.style.height = `${scaledViewport.height / devicePixelRatio}px`;
+            fullscreenCanvas.style.width = `${scaledViewport.width / devicePixelRatio}px`;
+            
+            const renderContext = {
+                canvasContext: fullscreenCtx,
+                viewport: scaledViewport
+            };
+            
+            page.render(renderContext).promise.then(function() {
+                pageRendering = false;
+                if (pageNumPending !== null) {
+                    if (isFullscreen) {
+                        renderFullscreenPage(pageNumPending);
+                        syncFullscreenPageInfo();
+                    } else {
+                        renderPage(pageNumPending);
+                    }
+                    pageNumPending = null;
+                }
+            });
+            
+        }).catch(function(error) {
+            console.error('Error rendering fullscreen PDF page:', error);
+            pageRendering = false;
+        });
+        
+    } catch (error) {
+        console.error('Error in renderFullscreenPage:', error);
+        pageRendering = false;
+    }
+}
+
+function syncFullscreenPageInfo() {
+    // 同步页码信息到全屏控制栏
+    const fsPageNum = document.getElementById('fs-page-num');
+    const fsPageCount = document.getElementById('fs-page-count');
+    const pageNumElement = document.getElementById('page-num');
+    const pageCountElement = document.getElementById('page-count');
+    
+    if (fsPageNum && pageNumElement) {
+        fsPageNum.textContent = pageNumElement.textContent;
+    }
+    if (fsPageCount && pageCountElement) {
+        fsPageCount.textContent = pageCountElement.textContent;
     }
 }
 
