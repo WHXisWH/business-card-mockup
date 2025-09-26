@@ -453,30 +453,18 @@ function goBack() {
     }
 }
 
-// NFT受け取り機能 - ArchitectDAO連携（真実データ使用）
+// NFTミント機能 - モック版（直接ミント成功を表示）
 function receiveNFT() {
     try {
-        // NFTデータマネージャーから真実データを取得
+        // NFTデータマネージャーからデータを取得
         const nftData = window.nftDataManager.generateTransferData();
-        
-        console.log('Using real NFT data for transfer:', nftData);
 
-        // ArchitectDAO URL構築（環境に応じて変更）
-        const architectDAOUrl = window.location.hostname === 'localhost' 
-            ? 'http://localhost:5173'  // ローカル開発用
-            : 'https://architect-dao.vercel.app';  // 本番用ArchitectDAO
-        
-        // URLパラメータとしてデータを渡す（本番環境では暗号化推奨）
-        const params = new URLSearchParams({
-            action: 'mint',
-            source: 'nfc-dx-platform',
-            data: JSON.stringify(nftData)
-        });
+        console.log('Mock NFT minting with data:', nftData);
 
-        // 確認ダイアログ（真実データを使用）
-        const confirmed = confirm(`🎁 ArchitectDAO でNFTを受け取りますか？
+        // 確認ダイアログ（地道な日本語）
+        const confirmed = confirm(`🎁 NFTをミント（発行）しますか？
 
-${nftData.name} のデジタルアセットが、${nftData.blockchain}上のNFTとして無料で転送されます。
+${nftData.name} のデジタルアセットを、${nftData.blockchain}上のNFTとして無料で発行いたします。
 
 【NFT詳細情報】
 • Token ID: ${nftData.originalTokenId}
@@ -485,71 +473,90 @@ ${nftData.name} のデジタルアセットが、${nftData.blockchain}上のNFT�
 
 【付与される権利】
 • 3Dモデルの商用利用権
-• 設計図面のダウンロード権  
+• 設計図面のダウンロード権
 • 技術仕様書へのアクセス権
 • 将来のアップデート版の優先入手権
 
-ArchitectDAO プラットフォームに移動してNFTを受け取りますか？`);
+NFTをミント（発行）しますか？`);
 
         if (confirmed) {
             // ローディング表示
-            const loading = showLoading('ArchitectDAO に接続中...');
-            
-            // 少し遅延を入れてユーザーフィードバック向上
+            const loading = showLoading('NFTをミント中...');
+
+            // モックミント処理（少し遅延でリアル感を演出）
             setTimeout(() => {
                 hideLoading();
-                
-                // ArchitectDAOに新しいタブで移動
-                const newTab = window.open(
-                    `${architectDAOUrl}?${params.toString()}`,
-                    '_blank',
-                    'noopener,noreferrer'
-                );
-                
-                if (!newTab) {
-                    showError('ポップアップがブロックされています。ブラウザの設定でポップアップを許可してください。');
-                } else {
-                    // 成功メッセージ
-                    showNFTSuccessMessage();
-                }
-            }, 1500);
+
+                // ミント成功メッセージを表示
+                showNFTMintSuccessMessage(nftData);
+
+            }, 2000); // 2秒後にミント成功を表示
         }
-        
+
     } catch (error) {
         hideLoading();
-        showError('ArchitectDAO連携中にエラーが発生しました', error);
+        showError('NFTミント中にエラーが発生しました', error);
     }
 }
 
-// NFT受け取り成功メッセージ
-function showNFTSuccessMessage() {
+// NFTミント成功メッセージ（地道な日本語版）
+function showNFTMintSuccessMessage(nftData) {
     const successDiv = document.createElement('div');
     successDiv.className = 'nft-success-message';
     successDiv.innerHTML = `
         <div class="nft-success-content">
-            <div class="success-icon">🎉</div>
-            <h3>ArchitectDAO に移動しました</h3>
-            <p>新しいタブで ArchitectDAO が開かれました。<br>そちらでNFTのミント（発行）を完了してください。</p>
+            <div class="success-icon">🎊</div>
+            <h3>NFTミントが完了いたしました！</h3>
+            <div class="nft-info-box">
+                <h4>🏆 ${nftData.name}</h4>
+                <p class="nft-description">あなたのウォレットに正常に発行されました</p>
+            </div>
+            <div class="mint-details">
+                <div class="detail-row">
+                    <span class="label">Token ID:</span>
+                    <span class="value">#${nftData.originalTokenId}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">ブロックチェーン:</span>
+                    <span class="value">${nftData.blockchain}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">発行日時:</span>
+                    <span class="value">${new Date().toLocaleString('ja-JP')}</span>
+                </div>
+            </div>
             <div class="success-features">
-                <h4>取得できる権利：</h4>
+                <h4>🎁 ご利用いただける特典:</h4>
                 <ul>
-                    <li>✅ 3Dモデルの商用利用権</li>
-                    <li>✅ 設計図面のダウンロード権</li>
-                    <li>✅ 技術仕様書へのアクセス権</li>
-                    <li>✅ 将来のアップデート版の優先入手権</li>
+                    <li>✨ 3Dモデルの商用利用権限</li>
+                    <li>📋 設計図面の無制限ダウンロード</li>
+                    <li>📖 技術仕様書への永続アクセス</li>
+                    <li>⚡ 将来のアップデート版優先入手</li>
+                    <li>🏅 限定コミュニティへの参加権</li>
                 </ul>
             </div>
-            <button onclick="this.parentElement.parentElement.remove()" class="btn">確認</button>
+            <div class="success-actions">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-primary">素晴らしい！</button>
+                <button onclick="window.open('https://opensea.io/', '_blank')" class="btn btn-secondary">OpenSeaで確認</button>
+            </div>
         </div>
     `;
     document.body.appendChild(successDiv);
-    
-    // 自動削除（10秒後）
+
+    // 成功アニメーション効果
+    setTimeout(() => {
+        successDiv.classList.add('success-animation');
+    }, 100);
+
+    // 自動削除（15秒後）
     setTimeout(() => {
         if (successDiv.parentNode) {
-            successDiv.remove();
+            successDiv.classList.add('fade-out');
+            setTimeout(() => {
+                successDiv.remove();
+            }, 300);
         }
-    }, 10000);
+    }, 15000);
 }
 
 // イベントリスナー設定

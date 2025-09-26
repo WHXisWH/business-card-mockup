@@ -721,3 +721,169 @@ model-viewer {
         font-size: 48px;
     }
 }
+
+/* 新しいNFTミント成功界面のスタイル */
+.nft-info-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.nft-info-box h4 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.nft-description {
+    margin: 0;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.mint-details {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px 0;
+    backdrop-filter: blur(5px);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-row .label {
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.detail-row .value {
+    color: #333;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.success-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #32CD32, #228B22);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #228B22, #006400);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(50, 205, 50, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, #6c757d, #495057);
+    color: white;
+    border: 2px solid transparent;
+    border-radius: 25px;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(45deg, #495057, #343a40);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
+}
+
+/* アニメーション効果 */
+.success-animation {
+    animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* モバイル対応の改善 */
+@media (max-width: 480px) {
+    .nft-success-content {
+        padding: 25px 15px;
+        margin: 5px;
+        max-width: 95vw;
+    }
+
+    .success-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .mint-details {
+        padding: 12px;
+    }
+
+    .detail-row {
+        font-size: 13px;
+    }
+
+    .nft-info-box h4 {
+        font-size: 18px;
+    }
+}
