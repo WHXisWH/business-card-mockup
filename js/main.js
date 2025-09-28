@@ -409,7 +409,7 @@ function showViewer(title, description, modelSrc) {
         const nftTitleElement = document.getElementById('nftTitle');
         
         if (titleElement) titleElement.textContent = title;
-        if (descElement) descElement.textContent = description;
+        if (descElement) descElement.innerHTML = description;
         if (nftTitleElement) nftTitleElement.textContent = title + ' NFT';
         
         showScreen('viewerScreen');
